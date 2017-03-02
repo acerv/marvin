@@ -1,0 +1,5 @@
+pyyaml == 3.12
+paramiko == 2.1.1
+pyserial == 3.2.1
+pykwalify[ruamel] == 1.6.0
+colorama == 0.3.7

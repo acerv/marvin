@@ -1,0 +1,33 @@
+
+description: execute some commands remotely using SSH
+name       : ssh_execute
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    ssh:
+        address : localhost
+        port    : 22
+        user    : sshtest
+        password: test
+        timeout : 5.0
+
+execute:
+    protocol: ssh
+
+    commands:
+        - script: "test -d /"
+          passing: "0"
+          failing: "1"
+
+        - script: "test -d /dhsuojdlsad"
+          passing: "0"
+          failing: "1"
+
+        - script: "dmesg"
+          passing: "0"
+          failing: "1"
+
+        - script: "mkdir -p exec_test_dir; rm -rf exec_test_dir"
+          passing: "0"
+          failing: "1"

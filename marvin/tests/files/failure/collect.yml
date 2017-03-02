@@ -1,0 +1,15 @@
+description: deploy successful test file for the tester module
+name       : deploy_success
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    # sftp is not defined
+
+collect:
+    protocol: sftp
+
+    transfer:
+        - source: /home/sshtest/testfile.txt
+          dest: testfile.txt
+          type  : file

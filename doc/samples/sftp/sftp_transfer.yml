@@ -1,0 +1,30 @@
+
+description: transfer test data using SFTP
+name       : sftp
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    sftp:
+        address : localhost
+        port    : 22
+        user    : sshtest
+        password: test
+        timeout : 5.0
+
+deploy:
+    delete: True
+    protocol: sftp
+
+    transfer:
+        - source: ./testfile01.bin
+          dest  : /home/sshtest/testfile01.bin
+          type  : file
+        
+        - source: ./testfile02.bin
+          dest  : /home/sshtest/testfile02.bin
+          type  : file
+
+        - source: ./testfile03.bin
+          dest  : /home/sshtest/testfile03.bin
+          type  : file

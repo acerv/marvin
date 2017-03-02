@@ -1,0 +1,15 @@
+description: A simple test Yaml configuration file.
+name       : bad_formatted_test
+version    : 1.0
+author     : Andrea Cervesato
+
+------- This should not be here --------
+  ****** Not even this one ******
+
+protocols:
+  sftp:
+      address : localhost
+      port    : 22
+      user    : sshtest
+      password: test
+      timeout : 5.0

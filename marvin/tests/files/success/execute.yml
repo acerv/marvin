@@ -1,0 +1,24 @@
+description: execute successful test file for the tester module
+name       : execute_success
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    ssh:
+        address : localhost
+        port    : 22
+        user    : sshtest
+        password: test
+        timeout : 5.0
+
+execute:
+    protocol: ssh
+
+    commands:
+        - script: "test -d /"
+          passing: "0"
+          failing: "1"
+
+        - script: "test -d /dhsuojdlsad"
+          passing: "0"
+          failing: "1"

@@ -1,0 +1,24 @@
+description: test file for unittest
+name       : ssh_address_fail 
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    ssh:
+        address : localtarget # raises SSHConnectionError
+        port    : 22
+        user    : sshtest
+        password: test
+        timeout : 5.0
+
+execute:
+    protocol: ssh
+
+    commands:
+        - script: "test -d /"
+          passing: "0"
+          failing: "1"
+
+        - script: "test -d /dhsuojdlsad"
+          passing: "0"
+          failing: "1"

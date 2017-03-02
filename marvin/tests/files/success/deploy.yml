@@ -1,0 +1,27 @@
+description: deploy successful test file for the tester module
+name       : deploy_success
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    sftp:
+        address : localhost
+        port    : 22
+        user    : sshtest
+        password: test
+        timeout : 5.0
+
+deploy:
+    protocol: sftp
+    delete  : true
+
+    transfer:
+        - source: ./testfile0.txt
+          dest  : /home/sshtest/testfile0.txt
+          type  : file
+
+        - source: ./testfile1.txt
+          dest  : /home/sshtest/testfile1.txt
+
+        - source: ./testfile2.txt
+          dest  : /home/sshtest/testfile2.txt
