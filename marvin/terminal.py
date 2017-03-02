@@ -66,10 +66,10 @@ class TerminalWriter:
         self._stdout.write("\n\n")
 
     def _print_ok(self):
-        self._stdout.write(Fore.GREEN+"OK\n"+Fore.RESET)
+        self._stdout.write(Fore.LIGHTGREEN_EX+"OK\n"+Fore.RESET)
 
     def _print_fail(self):
-        self._stdout.write(Fore.RED+"FAIL\n"+Fore.RESET)
+        self._stdout.write(Fore.LIGHTRED_EX+"FAIL\n"+Fore.RESET)
 
     def _print_read_file_started(self, testfile):
         self._stdout.write("\n")
@@ -118,13 +118,13 @@ class TerminalWriter:
     def _print_exec_result(self, command, passing, failing, result):
         if result == passing:
             self._stdout.write("%sPASSED (%s)%s\n"%\
-                (Fore.GREEN, result, Fore.RESET))
+                (Fore.LIGHTGREEN_EX, result, Fore.RESET))
         elif result == failing:
             self._stdout.write("%sFAILED (%s)%s\n"%\
-                (Fore.RED, result, Fore.RESET))
+                (Fore.LIGHTRED_EX, result, Fore.RESET))
         else:
             self._stdout.write("%sUNKNOWN (%s)%s\n"%\
-                (Fore.BLUE, result, Fore.RESET))
+                (Fore.LIGHTBLUE_EX, result, Fore.RESET))
 
     ############# DEPLOY/COLLECT STAGE ##############
     def _print_deploy_started(self):
