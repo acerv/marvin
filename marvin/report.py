@@ -9,6 +9,7 @@
 
 import os
 import re
+import shutil
 
 # pylint: disable=too-few-public-methods
 # pylint: disable=anomalous-backslash-in-string
@@ -70,11 +71,9 @@ def create_test_report_dir(reportsdir, testname, testver):
     os.mkdir(test_report_dir)
 
     # create local and remote data directories
-    data_path = os.path.join(test_report_dir, 'data')
-    local_data_path = os.path.join(data_path, 'local')
-    remote_data_path = os.path.join(data_path, 'remote')
+    local_data_path = os.path.join(test_report_dir, 'local')
+    remote_data_path = os.path.join(test_report_dir, 'remote')
 
-    os.mkdir(data_path)
     os.mkdir(local_data_path)
     os.mkdir(remote_data_path)
 
@@ -85,3 +84,156 @@ def create_test_report_dir(reportsdir, testname, testver):
         remote_data_path)
 
     return reportdir
+
+class ReportWriter:
+    """
+    Write the reports in the report directory
+    """
+    def __init__(self):
+        self._reportdir = None
+        self._freport = None
+        self._testfile = None
+
+    def listen(self, events):
+        """
+        Listen to the Core events, to log them in the report file.
+        """
+         # register loading callbacks
+        events.readFileStarted += self._print_read_file_started
+        events.createReportDirCompleted += self._print_reportdir
+        events.readProtocolStarted += self._print_protocol_name
+        events.readProtocolCompleted += self._print_protocol_definition
+        events.readDeployStarted += self._print_read_deploy_started
+        events.readDeployCompleted += self._print_read_deploy_completed
+        events.readExecuteStarted += self._print_read_execute_started
+        events.readExecuteCompleted += self._print_read_execute_completed
+        events.readCollectStarted += self._print_read_collect_started
+        events.readCollectCompleted += self._print_read_collect_completed
+
+        # register operations callbacks
+        events.deployStarted += self._print_deploy_started
+        events.dataTransfer += self._print_data_transfer
+        events.dataTransferProgress += self._print_data_transfer_progress
+        events.cleanupTargetStarted += self._print_cleanup_started
+        events.cleanupTargetPath += self._print_cleanup_target_path
+        events.executeStarted += self._print_execute_started
+        events.executeCommandStarted += self._print_exec_command
+        events.executeCommandCompleted += self._print_exec_result
+        events.collectStarted += self._print_collect_started
+
+        # register exception callback
+        events.exceptionCatched += self._print_exception
+
+    def __del__(self):
+        if self._freport:
+            self._freport.close()
+
+    def _write_file(self, text):
+        if self._freport:
+            self._freport.write(text)
+
+    def _write_stream(self, stream):
+        for line in iter(stream.readline, ""):
+            self._write_file(line)
+
+    def _print_exception(self, ex):
+        self._write_file("\n\n%s"%ex)
+        self._write_file("\n\n")
+
+    def _print_ok(self):
+        self._write_file("OK\n")
+
+    def _print_fail(self):
+        self._write_file("FAIL\n")
+
+    def _print_read_file_started(self, testfile):
+        self._testfile = testfile
+
+    def _print_read_file_completed(self, testdef):
+        if testdef:
+            self._print_ok()
+        else:
+            self._print_fail()
+
+    def _print_reportdir(self, reportdir):
+        self._reportdir = reportdir
+
+        self._freport = open(os.path.join(reportdir.root, "report.log"), "a")
+        self._write_file("report: %s\n"%reportdir.root)
+
+        test_copy = os.path.join(self._reportdir.root, \
+            os.path.basename(self._testfile))
+        shutil.copyfile(self._testfile, test_copy)
+
+    def _print_protocol_name(self, name):
+        self._write_file("protocol '%s':\n"%name)
+
+    def _print_protocol_definition(self, protocol):
+        for key, value in protocol.items():
+            self._write_file("    %s: %s\n"%(key, value))
+
+    def _print_execute_started(self):
+        self._write_file("execute started...\n")
+
+    def _print_read_execute_started(self):
+        self._write_file("reading 'execute' stage...")
+
+    def _print_read_execute_completed(self, executedef):
+        if executedef:
+            self._print_ok()
+        else:
+            self._print_fail()
+
+    def _print_exec_command(self, command, stdout, stderr):
+        self._write_file("executing '%s'...\n"%command)
+
+        self._write_file("STDOUT:\n")
+        self._write_stream(stdout)
+
+        self._write_file("STDERR:\n")
+        self._write_stream(stderr)
+
+    def _print_exec_result(self, command, passing, failing, result):
+        if result == passing:
+            self._write_file("'%s' PASSED (%s)\n"%(command, result))
+        elif result == failing:
+            self._write_file("'%s' FAILED (%s)\n"%(command, result))
+        else:
+            self._write_file("'%s' UNKNOWN (%s)\n"%(command, result))
+
+    def _print_deploy_started(self):
+        self._write_file("deploy started...\n")
+
+    def _print_collect_started(self):
+        self._write_file("collect started...\n")
+
+    def _print_cleanup_started(self):
+        self._write_file("cleaning up...")
+
+    def _print_read_deploy_started(self):
+        self._write_file("reading 'deploy' stage...")
+
+    def _print_read_deploy_completed(self, deploydef):
+        if deploydef:
+            self._print_ok()
+        else:
+            self._print_fail()
+
+    def _print_read_collect_started(self):
+        self._write_file("reading 'collect' stage...")
+
+    def _print_read_collect_completed(self, collectdef):
+        if collectdef:
+            self._print_ok()
+        else:
+            self._print_fail()
+
+    def _print_data_transfer(self, source, destination):
+        self._write_file("transfer '%s' to '%s'..."%\
+            (os.path.basename(source), destination))
+
+    def _print_data_transfer_progress(self, current, total):
+        pass
+
+    def _print_cleanup_target_path(self, path):
+        self._write_file("removing '%s'...\n"%path)
