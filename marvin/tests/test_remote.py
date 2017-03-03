@@ -22,17 +22,18 @@ class TestRemote(unittest.TestCase):
     def setUpClass(cls):
         cls.currdir = os.path.dirname(os.path.abspath(__file__))
         cls.localfile = os.path.join(cls.currdir, 'testfile.txt')
-        cls.remotefile = "/home/sshtest/testfile.txt"
+        cls.home = os.environ['HOME']
+        cls.remotefile = os.path.join(cls.home, "testfile.txt")
         cls.commands = ["test -d /", "test -d /dsajkdlsad"]
 
         with open(cls.localfile, 'a') as fhandler:
             fhandler.write('created by remote unittest')
 
         cls.remotestoremove = [
-            "/home/sshtest/toremove0.txt",
-            "/home/sshtest/toremove1.txt",
-            "/home/sshtest/toremove2.txt",
-            "/home/sshtest/toremove3.txt"
+            os.path.join(cls.home, "toremove0.txt"),
+            os.path.join(cls.home, "toremove1.txt"),
+            os.path.join(cls.home, "toremove2.txt"),
+            os.path.join(cls.home, "toremove3.txt")
         ]
 
         for item in cls.remotestoremove:
@@ -68,7 +69,7 @@ class TestRemote(unittest.TestCase):
         """ test sftp_remove function """
         protocol = SFTPProtocol(
             "localhost", 22,
-            "sshtest", "test",
+            "", "",
             2.0
         )
 
@@ -81,7 +82,7 @@ class TestRemote(unittest.TestCase):
         """ test sftp_transfer function """
         protocol = SFTPProtocol(
             "localhost", 22,
-            "sshtest", "test",
+            "", "",
             2.0
         )
 
@@ -106,7 +107,7 @@ class TestRemote(unittest.TestCase):
         """ test ssh_execute function """
         protocol = OpenSSHProtocol(
             "localhost", 22,
-            "sshtest", "test",
+            "", "",
             2.0
         )
 
