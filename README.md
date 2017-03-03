@@ -1,6 +1,6 @@
-# Introduction
 [![Build Status](https://travis-ci.org/acerv/marvin.svg?branch=master)](https://travis-ci.org/acerv/marvin)
 
+# Introduction
 Marvin is a framework made for remote testing. At the moment, the following
 protocols are supported:
 * ssh
