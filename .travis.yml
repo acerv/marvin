@@ -1,9 +1,16 @@
 language: python
 python:
   - "3.5"
+
 cache: pip
+sudo: required
+
 install:
   - make install
+
 script:
   - ./.travis-ssh.sh
   - pytest -v ./marvin/tests
+
+after_script:
+  - make uninstall
