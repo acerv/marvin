@@ -7,8 +7,8 @@ protocols:
     sftp:
         address : localhost
         port    : 22
-        user    : sshtest
-        password: test
+        user    : ""
+        password: ""
         timeout : 5.0
 
 deploy:
@@ -18,5 +18,5 @@ deploy:
     transfer:
         # raises LocalPathNotExistError
         - source: this_file_does_not_exist.txt
-          dest  : /home/sshtest/testfile0.txt
+          dest  : ~/testfile0.txt
           type  : file
