@@ -134,6 +134,8 @@ class ReportWriter:
 
     def _write_stream(self, stream):
         for line in iter(stream.readline, ""):
+            if not line:
+                break
             self._write_file(line)
 
     def _print_exception(self, ex):

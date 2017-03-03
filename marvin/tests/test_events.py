@@ -9,8 +9,10 @@
 
 import os
 import time
+import shutil
 import unittest
 import marvin.file
+import marvin.report
 from marvin.events import CoreEvents
 
 class DummyStream:
@@ -27,9 +29,18 @@ class DummyStream:
 
 class TestCoreEvents(unittest.TestCase):
     """ Test CoreEvents class """
+    @classmethod
+    def setUpClass(cls):
+        cls._currpath = os.path.abspath(os.path.dirname(__file__))
+        cls._reportsdir = os.path.join(cls._currpath, "reports")
+        os.mkdir(cls._reportsdir)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls._reportsdir)
+
     def setUp(self):
-        self.currpath = os.path.abspath(os.path.dirname(__file__))
-        self.testfile = os.path.join(self.currpath, "files", "events.yml")
+        self.testfile = os.path.join(self._currpath, "files", "events.yml")
         self.testdef = marvin.file.load(self.testfile)
         self.events = CoreEvents()
 
@@ -38,6 +49,16 @@ class TestCoreEvents(unittest.TestCase):
         # loading test file
         self.assertFalse(self.events.readFileStarted(self.testfile))
         self.assertFalse(self.events.readFileCompleted(self.testdef))
+
+        # create reports directory
+        self.assertFalse(self.events.createReportDirStarted(self._reportsdir))
+        reportdir = marvin.report.create_test_report_dir(\
+            self._reportsdir,\
+            self.testdef['name'],\
+            self.testdef['version'])
+        self.assertFalse(self.events.createReportDirCompleted(reportdir))
+
+        # loading stages informations
         self.assertFalse(self.events.readProtocolStarted("sftp"))
         self.assertFalse(self.events.readProtocolCompleted(
             self.testdef["protocols"]["sftp"]))
