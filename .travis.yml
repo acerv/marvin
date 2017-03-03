@@ -1,0 +1,9 @@
+language: python
+python:
+  - "3.5"
+cache: pip
+install:
+  - make install
+script:
+  - ./.travis-ssh.sh
+  - pytest -v ./marvin/tests
