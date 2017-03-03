@@ -15,6 +15,6 @@ collect:
     protocol: sftp
 
     transfer:
-        - source: ~/testfile.txt
+        - source: testfile.txt
           dest: testfile.txt
           type  : file

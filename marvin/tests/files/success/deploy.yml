@@ -17,11 +17,11 @@ deploy:
 
     transfer:
         - source: ./testfile0.txt
-          dest  : ~/testfile0.txt
+          dest  : testfile0.txt
           type  : file
 
         - source: ./testfile1.txt
-          dest  : ~/testfile1.txt
+          dest  : testfile1.txt
 
         - source: ./testfile2.txt
-          dest  : ~/testfile2.txt
+          dest  : testfile2.txt

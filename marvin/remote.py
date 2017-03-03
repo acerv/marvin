@@ -99,10 +99,20 @@ class OpenSSH:
             ssh = paramiko.SSHClient()
             ssh.load_system_host_keys()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+            # paramiko doesn't accept empty string for user/password but None
+            inner_user = None
+            if protocol.user:
+                inner_user = protocol.user
+
+            inner_pwd = None
+            if protocol.password:
+                inner_pwd = protocol.password
+
             ssh.connect(protocol.address, \
                 port=protocol.port, \
-                username=protocol.user, \
-                password=protocol.password, \
+                username=inner_user, \
+                password=inner_pwd, \
                 timeout=protocol.timeout)
         except (paramiko.SSHException, \
                 paramiko.AuthenticationException, \

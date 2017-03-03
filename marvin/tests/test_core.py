@@ -23,16 +23,22 @@ class TestTester(unittest.TestCase):
     def setUpClass(cls):
         cls.currdir = os.path.abspath(os.path.dirname(__file__))
         cls.reportsdir = os.path.join(cls.currdir, "reports")
-        cls.remotefile = "/home/sshtest/testfile.txt"
-        os.mkdir(cls.reportsdir)
+        cls.homedir = os.environ['HOME']
+        cls.remotefile = os.path.join(cls.homedir, "testfile.txt")
+
+        if not os.path.exists(cls.reportsdir):
+            os.mkdir(cls.reportsdir)
 
         with open(cls.remotefile, 'a') as file:
             file.write("")
 
     @classmethod
     def tearDownClass(cls):
-        os.remove(cls.remotefile)
-        shutil.rmtree(cls.reportsdir)
+        if os.path.exists(cls.reportsdir):
+            shutil.rmtree(cls.reportsdir)
+
+        if os.path.exists(cls.remotefile):
+            os.remove(cls.remotefile)
 
     def test_core_deploy_failure(self):
         """ Test if FileParseError is raised when core is bad formatted """
@@ -41,7 +47,7 @@ class TestTester(unittest.TestCase):
             core = Core()
             core.load(testfile, self.reportsdir)
 
-    def test_deploy_localpath_failuer(self):
+    def test_deploy_localpath_failure(self):
         """ Test if LocalPathNotExistError is raised when localpath doesn't exist """
         testfile = os.path.join(self.currdir, "files", "failure", "local_path.yml")
         with self.assertRaises(LocalPathNotExistError):

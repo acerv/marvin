@@ -33,7 +33,9 @@ class TestCoreEvents(unittest.TestCase):
     def setUpClass(cls):
         cls._currpath = os.path.abspath(os.path.dirname(__file__))
         cls._reportsdir = os.path.join(cls._currpath, "reports")
-        os.mkdir(cls._reportsdir)
+
+        if not os.path.exists(cls._reportsdir):
+            os.mkdir(cls._reportsdir)
 
     @classmethod
     def tearDownClass(cls):
