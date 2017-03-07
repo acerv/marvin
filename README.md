@@ -118,8 +118,6 @@ To run unittests, simply run:
     pytest marvin/tests
 
 # TODO
-* populate report directory
-* directories transfer/remove (only a single file can be transferred/removed)
 * serial protocol support
 * ftp protocol support
 * git protocol support
