@@ -8,6 +8,7 @@
 """
 
 import os
+import stat
 import logging
 import socket
 import paramiko
@@ -122,6 +123,103 @@ class OpenSSH:
 
         return ssh
 
+    @staticmethod
+    def _sftp_full_permissions(sftp, path):
+        sftp.chmod(path, \
+            stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | \
+            stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | \
+            stat.S_IROTH | stat.S_IWOTH | stat.S_IXOTH)
+
+    def _sftp_put_path(self, sftp, src, dst, icallback, tcallback):
+        if os.path.isdir(src): # transfer directory
+            sftp.mkdir(dst)
+            self._sftp_full_permissions(sftp, dst)
+
+            for src_root, dirs, files in os.walk(src, topdown=True):
+                # skip this stage if directory is empty
+                if not dirs and not files:
+                    break
+
+                dst_root = src_root.replace(src, dst)
+                dst_file = ""
+
+                self._logger.debug("dirs=%s, files=%s", dirs, files)
+
+                for name in dirs:
+                    dst_file = "%s/%s" % (dst_root, name)
+
+                    self._logger.debug("creating %s", dst_file)
+
+                    sftp.mkdir(dst_file)
+
+                for name in files:
+                    src_file = "%s/%s" % (src_root, name)
+                    dst_file = "%s/%s" % (dst_root, name)
+
+                    self._logger.debug("sending %s -> %s", src_file, dst_file)
+
+                    # notify when sending item
+                    if icallback:
+                        icallback(src_file, dst_file)
+
+                    sftp.put(src_file, dst_file, tcallback)
+
+                self._sftp_full_permissions(sftp, dst_file)
+        else: # transfer single file
+            if icallback:
+                icallback(src, dst)
+
+            sftp.put(src, dst, tcallback)
+
+            self._sftp_full_permissions(sftp, dst)
+
+    @staticmethod
+    def _sftp_remote_path_isdir(sftp, path):
+        if not path:
+            raise ValueError("path is empty")
+
+        if stat.S_ISDIR(sftp.stat(path).st_mode):
+            return True
+
+        return False
+
+    def _sftp_get_path(self, sftp, src, dst, icallback, tcallback):
+        if self._sftp_remote_path_isdir(sftp, src):
+            os.mkdir(dst)
+
+            files = sftp.listdir(path=src)
+
+            for file in files:
+                filepath = "%s/%s"%(src, file)
+                destpath = "%s/%s"%(dst, file)
+
+                self._logger.debug("fetching %s -> %s", filepath, destpath)
+
+                self._sftp_get_path(sftp, \
+                    filepath, destpath, \
+                    icallback, tcallback)
+        else:
+            if icallback:
+                icallback(src, dst)
+
+            sftp.get(src, dst, tcallback)
+
+    def _sftp_rm_path(self, sftp, pathtoremove, icallback):
+        if self._sftp_remote_path_isdir(sftp, pathtoremove):
+            files = sftp.listdir(path=pathtoremove)
+
+            for file in files:
+                filepath = "%s/%s"%(pathtoremove, file)
+
+                self._logger.debug("removing %s", filepath)
+
+                self._sftp_rm_path(sftp, filepath, icallback)
+
+            # remove the directory once it's emty
+            sftp.rmdir(pathtoremove)
+        else:
+            sftp.remove(pathtoremove)
+
     def sftp_transfer(self, data, item_callback=None, transfer_callback=None):
         """
         Transfer data from/to target using a the *sftp* protocol.
@@ -156,15 +254,15 @@ class OpenSSH:
 
             # transfer data
             for item in data:
-                if item_callback:
-                    item_callback(item.source, item.destination)
-
                 if item.target == "remote":
-                    sftp.put(item.source, item.destination, transfer_callback)
+                    self._sftp_put_path(sftp, \
+                        item.source, item.destination, \
+                        item_callback, transfer_callback)
                 else: # local
                     try:
-                        sftp.get(item.source, item.destination, \
-                            transfer_callback)
+                        self._sftp_get_path(sftp, \
+                            item.source, item.destination, \
+                            item_callback, transfer_callback)
                     except IOError as ex:
                         raise RemotePathNotExistError(\
                             "'%s' doesn't exist"%item.source) from ex
@@ -194,7 +292,7 @@ class OpenSSH:
                     callback(item)
 
                 try:
-                    sftp.remove(item)
+                    self._sftp_rm_path(sftp, item, callback)
                 except IOError as ex:
                     raise RemotePathNotExistError(\
                         "'%s' doesn't exist"%item) from ex

@@ -9,6 +9,7 @@
 
 import os
 import sys
+import shutil
 import unittest
 from marvin.remote import OpenSSH
 from marvin.remote import OpenSSHProtocol
@@ -20,63 +21,60 @@ class TestRemote(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # local data
         cls.currdir = os.path.dirname(os.path.abspath(__file__))
-        cls.localfile = os.path.join(cls.currdir, 'testfile.txt')
-        cls.home = os.environ['HOME']
-        cls.remotefile = os.path.join(cls.home, "testfile.txt")
-        cls.commands = ["test -d /", "test -d /dsajkdlsad"]
-
-        with open(cls.localfile, 'a') as fhandler:
-            fhandler.write('created by remote unittest')
-
-        cls.remotestoremove = [
-            os.path.join(cls.home, "toremove0.txt"),
-            os.path.join(cls.home, "toremove1.txt"),
-            os.path.join(cls.home, "toremove2.txt"),
-            os.path.join(cls.home, "toremove3.txt")
+        cls.localdir = os.path.join(cls.currdir, "testdir")
+        cls.nesteddir = os.path.join(cls.localdir, "nesteddir")
+        cls.localfiles = [
+            os.path.join(cls.localdir, "toremove0.txt"),
+            os.path.join(cls.localdir, "toremove1.txt"),
+            os.path.join(cls.localdir, "toremove2.txt"),
+            os.path.join(cls.localdir, "toremove3.txt")
         ]
 
-        for item in cls.remotestoremove:
+        if not os.path.isdir(cls.localdir):
+            os.mkdir(cls.localdir)
+
+        if not os.path.isdir(cls.nesteddir):
+            os.mkdir(cls.nesteddir)
+
+        for item in cls.localfiles:
             with open(item, 'a') as fhandler:
                 fhandler.write("created by remote unittest")
 
+        # remote data
+        cls.home = os.environ['HOME']
+        cls.remotedir = os.path.join(cls.home, "testdir")
+        cls.commands = ["test -d /", "test -d /dsajkdlsad"]
+
     @classmethod
     def tearDownClass(cls):
-        os.remove(cls.localfile)
-        os.remove(cls.remotefile)
+        if os.path.isdir(cls.remotedir):
+            shutil.rmtree(cls.remotedir)
 
-        for item in cls.remotestoremove:
-            if os.path.exists(item):
-                os.remove(item)
+        if os.path.isdir(cls.localdir):
+            shutil.rmtree(cls.localdir)
 
-    def _from_local_to_target(self, src, dst):
-        self.assertEqual(src, self.localfile)
-        self.assertEqual(dst, self.remotefile)
+    def _from_host_to_target(self, src, dst):
+        srcdir = os.path.dirname(src)
+        self.assertEqual(self.localdir, srcdir)
 
-    def _from_target_to_local(self, src, dst):
-        self.assertEqual(src, self.remotefile)
-        self.assertEqual(dst, self.localfile)
+        dstdir = os.path.dirname(dst)
+        self.assertEqual(self.remotedir, dstdir)
+
+    def _from_target_to_host(self, src, dst):
+        srcdir = os.path.dirname(src)
+        self.assertEqual(self.remotedir, srcdir)
+
+        dstdir = os.path.dirname(dst)
+        self.assertEqual(self.localdir, dstdir)
+
+    def _test_removing_dir(self, path):
+        self.assertEqual(self.remotedir, path)
 
     @staticmethod
     def _print_status(curr_bytes, tot_bytes):
         sys.stdout.write("%s/%s Bytes"%(curr_bytes, tot_bytes))
-
-    def _test_removing_item(self, item):
-        self.assertIn(item, self.remotestoremove)
-        self.assertTrue(os.path.exists(item))
-
-    def test_sftp_remove(self):
-        """ test sftp_remove function """
-        protocol = SFTPProtocol(
-            "localhost", 22,
-            "", "",
-            2.0
-        )
-
-        ssh = OpenSSH(protocol)
-
-        self.assertFalse(ssh.sftp_remove(self.remotestoremove, \
-            self._test_removing_item))
 
     def test_sftp_transfer(self):
         """ test sftp_transfer function """
@@ -89,14 +87,24 @@ class TestRemote(unittest.TestCase):
         ssh = OpenSSH(protocol)
 
         # from host to target
-        data_remote = [DataItem(self.localfile, self.remotefile, "remote")]
+        data_remote = [DataItem(self.localdir, self.remotedir, "remote")]
         self.assertFalse(ssh.sftp_transfer(data_remote, \
-            self._from_local_to_target))
+            self._from_host_to_target))
+
+        # remove local data
+        self.assertTrue(os.path.isdir(self.localdir))
+        shutil.rmtree(self.localdir)
 
         # from target to host
-        data_local = [DataItem(self.remotefile, self.localfile, "local")]
+        data_local = [DataItem(self.remotedir, self.localdir, "local")]
         self.assertFalse(ssh.sftp_transfer(data_local, \
-            self._from_target_to_local))
+            self._from_target_to_host))
+
+        # remove remote data
+        self.assertFalse(ssh.sftp_remove([self.remotedir], \
+            self._test_removing_dir))
+
+        self.assertFalse(os.path.exists(self.remotedir))
 
     def _test_execute_callback(self, command, stdout, stderr):
         self.assertIn(command, self.commands)
