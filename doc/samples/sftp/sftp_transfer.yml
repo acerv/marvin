@@ -8,8 +8,8 @@ protocols:
     sftp:
         address : localhost
         port    : 22
-        user    : sshtest
-        password: test
+        user    : ""
+        password: ""
         timeout : 5.0
 
 deploy:

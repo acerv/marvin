@@ -7,8 +7,8 @@ protocols:
     sftp:
         address : &ssh_addr localhost
         port    : &ssh_port 22
-        user    : &ssh_user sshtest
-        password: &ssh_pass test
+        user    : &ssh_user ""
+        password: &ssh_pass ""
         timeout : &ssh_tout 5.0
 
     ssh:
