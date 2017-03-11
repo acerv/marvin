@@ -11,6 +11,14 @@ protocols:
         password: ""
         timeout : 5.0
 
+    serial:
+        port     : loop
+        baudrate : 9600
+        parity   : 'odd'
+        stop_bits: 2
+        data_bits: 7
+        timeout  : 1.0
+
 execute:
     protocol: ssh
 
@@ -20,5 +28,10 @@ execute:
           failing: "1"
 
         - script: "test -d /dhsuojdlsad"
-          passing: "0"
-          failing: "1"
+          passing: "1"
+          failing: "0"
+
+        - script: "ciao"
+          passing: "ciao"
+          failing: "not_ciao"
+          protocol: serial

@@ -52,6 +52,7 @@ class TerminalWriter:
         events.executeStarted += self._print_execute_started
         events.executeCompleted += self._print_execute_completed
         events.executeCommandStarted += self._print_exec_command
+        #events.executeStreamLine += self._print_stream_line
         events.executeCommandCompleted += self._print_exec_result
         events.collectStarted += self._print_collect_started
         events.collectCompleted += self._print_collect_completed
@@ -112,10 +113,10 @@ class TerminalWriter:
         else:
             self._print_fail()
 
-    def _print_exec_command(self, command, stdout, stdint):
+    def _print_exec_command(self, command):
         self._stdout.write("executing '%s'..."%command)
 
-    def _print_exec_result(self, command, passing, failing, result):
+    def _print_exec_result(self, passing, failing, result):
         if result == passing:
             self._stdout.write("%sPASSED (%s)%s\n"%\
                 (Fore.LIGHTGREEN_EX, result, Fore.RESET))

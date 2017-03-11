@@ -14,6 +14,7 @@ import marvin.report
 from marvin.events import CoreEvents
 from marvin.remote import OpenSSHProtocol
 from marvin.remote import SFTPProtocol
+from marvin.remote import SerialProtocol
 from marvin.stages import DeployStage
 from marvin.stages import ExecuteStage
 from marvin.stages import CollectStage
@@ -82,6 +83,21 @@ class Core:
             )
             self._protocols.append(ssh_protocol)
             self.events.readProtocolCompleted(ssh)
+
+        # read serial protocol definition
+        if 'serial' in protocolsdef:
+            self.events.readProtocolStarted("serial")
+            ser = protocolsdef['serial']
+            ser_protocol = SerialProtocol(
+                ser['port'],
+                ser['baudrate'],
+                ser['parity'],
+                ser['stop_bits'],
+                ser['data_bits'],
+                ser['timeout']
+            )
+            self._protocols.append(ser_protocol)
+            self.events.readProtocolCompleted(ser)
 
     def __read_deploy_definition(self):
         self._deploy = DeployStage(

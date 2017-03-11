@@ -37,3 +37,15 @@ class SSHConnectionError(Exception):
     using the openssh protocol.
     """
     pass
+
+class SerialConnectionError(Exception):
+    """
+    This exception is raised when there's an error connecting to a serial port.
+    """
+    pass
+
+class ExecCommandError(Exception):
+    """
+    This exception is raised when there's an error when executing commands.
+    """
+    pass

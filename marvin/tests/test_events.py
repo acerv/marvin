@@ -15,18 +15,6 @@ import marvin.file
 import marvin.report
 from marvin.events import CoreEvents
 
-class DummyStream:
-    """ a dummy stream to test events case """
-    def write(self, msg):
-        """ write on buffer """
-        pass
-    def read(self):
-        """ read a byte from buffer """
-        pass
-    def readline(self):
-        """ read a line from buffer """
-        pass
-
 class TestCoreEvents(unittest.TestCase):
     """ Test CoreEvents class """
     @classmethod
@@ -89,12 +77,13 @@ class TestCoreEvents(unittest.TestCase):
         self.assertFalse(self.events.executeStarted())
         for command in self.testdef["execute"]["commands"]:
             # simulate output stream
-            stdout = DummyStream()
-            stderr = DummyStream()
             self.assertFalse(self.events.executeCommandStarted(\
-                command["script"], stdout, stderr))
+                command["script"]))
+            self.assertFalse(self.events.executeStreamLine("line1\n"))
+            self.assertFalse(self.events.executeStreamLine("line2\n"))
+            self.assertFalse(self.events.executeStreamLine("line3\n"))
+            self.assertFalse(self.events.executeStreamLine("line4\n"))
             self.assertFalse(self.events.executeCommandCompleted(\
-                command["script"], \
                 command["passing"], \
                 command["failing"], \
                 "0"))

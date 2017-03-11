@@ -79,6 +79,7 @@ class CoreEvents:
         self.cleanupTargetPath = Event()
         self.cleanupTargetCompleted = Event()
         self.executeStarted = Event()
+        self.executeStreamLine = Event()
         self.executeCompleted = Event()
         self.executeCommandStarted = Event()
         self.executeCommandCompleted = Event()

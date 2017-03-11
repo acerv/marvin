@@ -13,6 +13,9 @@ from marvin.remote import OpenSSH
 from marvin.remote import DataItem
 from marvin.remote import OpenSSHProtocol
 from marvin.remote import SFTPProtocol
+from marvin.remote import Serial
+from marvin.remote import SerialProtocol
+from marvin.remote import CommandStream
 from marvin.errors import FileParseError
 
 # pylint: disable=too-few-public-methods
@@ -81,10 +84,11 @@ class CollectDataItem(TransferDataItem):
 class ExecuteDataItem(object):
     """ It contains execute stage commands informations """
 
-    def __init__(self, command, passing, failing):
+    def __init__(self, command, passing, failing, protocol):
         self.command = command
         self.passing = passing
         self.failing = failing
+        self.protocol = protocol
 
 class Stage(object):
     """ A generic test stage """
@@ -94,6 +98,28 @@ class Stage(object):
         self.testdir = testdir
         self.reportdir = reportdir
         self.events = events
+
+class StreamForwarder(CommandStream):
+    """ Forward command execution stream """
+    def __init__(self, events, commands):
+        self._events = events
+        self._command = None
+        self._commands = commands
+
+    def cmd_executing(self, command):
+        self._command = command
+        self._events.executeCommandStarted(command)
+
+    def handle_stdout_line(self, line):
+        self._events.executeStreamLine(line)
+
+    def cmd_completed(self, result):
+        for item in self._commands:
+            if item.command == self._command:
+                self._events.executeCommandCompleted(\
+                    item.passing, \
+                    item.failing, \
+                    result)
 
 class DeployStage(Stage):
     """ deploy stage handler """
@@ -228,7 +254,6 @@ class ExecuteStage(Stage):
         self._protocols = protocols
         self._execute_exists = False
         self._execute_cmds = []
-        self._execute_protocol = None
         self._read_definition()
 
     def _read_definition(self):
@@ -251,13 +276,14 @@ class ExecuteStage(Stage):
 
         self._logger.debug("default execute protocol=%s", protoname)
 
-        self._execute_protocol = None
+        def_exec_protocol = None
+
         for protocol in self._protocols:
             if protoname == protocol.name:
-                self._execute_protocol = protocol
+                def_exec_protocol = protocol
                 break
 
-        if not self._execute_protocol:
+        if not def_exec_protocol:
             raise FileParseError(\
                 "'%s' is not defined anywhere. Path: /execute/protocol"%\
                 protoname)
@@ -266,6 +292,8 @@ class ExecuteStage(Stage):
         commands = executedef['commands']
 
         self._logger.debug("commands=%s", commands)
+
+        exec_protocol = def_exec_protocol
 
         self._execute_cmds.clear()
         for command in commands:
@@ -278,22 +306,19 @@ class ExecuteStage(Stage):
                 failing = command['failing']
             if 'passing' in command:
                 passing = command['passing']
+            if 'protocol' in command:
+                protoname = command['protocol']
+                for proto in self._protocols:
+                    if protoname == proto.name:
+                        exec_protocol = proto
+                        break
 
-            item = ExecuteDataItem(script, passing, failing)
+            item = ExecuteDataItem(script, passing, failing, exec_protocol)
 
             self._execute_cmds.append(item)
 
         # notify execute has been read
         self.events.readExecuteCompleted(executedef)
-
-    def _hook_exec_callback(self, command, retvalue):
-        for item in self._execute_cmds:
-            if item.command == command:
-                self.events.executeCommandCompleted(\
-                    item.command, \
-                    item.passing, \
-                    item.failing, \
-                    retvalue)
 
     def run(self):
         """
@@ -305,21 +330,27 @@ class ExecuteStage(Stage):
 
         self.events.executeStarted()
 
-        commands = []
+        stream = StreamForwarder(self.events, self._execute_cmds)
+
+        # loop through commands
+        # TODO: optimize commands execution, using lists for commands
+        # having the same protocol
         for item in self._execute_cmds:
-            commands.append(item.command)
+            if isinstance(item.protocol, OpenSSHProtocol):
+                # ssh is defined
+                self._logger.debug("execute commands using ssh protocol")
 
-        # ssh is defined
-        if isinstance(self._execute_protocol, OpenSSHProtocol):
-            self._logger.debug("execute commands using ssh protocol")
+                openssh = OpenSSH(item.protocol)
+                openssh.ssh_execute([item.command], stream)
+            elif isinstance(item.protocol, SerialProtocol):
+                # serial is defined
+                self._logger.debug("execute commands using serial protocol")
 
-            openssh = OpenSSH(self._execute_protocol)
-            openssh.ssh_execute(commands, \
-                self.events.executeCommandStarted, \
-                    exec_callback=self._hook_exec_callback)
-        else:
-            raise NotImplementedError(\
-              "'%s' protocol is not implemented"%self._execute_protocol.name())
+                serial = Serial(item.protocol)
+                serial.send_command([item.command], stream)
+            else:
+                raise NotImplementedError(\
+                "'%s' protocol is not implemented"%item.protocol.name())
 
         self.events.executeCompleted()
 

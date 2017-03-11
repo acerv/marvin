@@ -8,24 +8,32 @@
 """
 
 import os
+import io
 import stat
 import logging
 import socket
 import paramiko
+import serial
 from marvin.errors import LocalPathNotExistError
 from marvin.errors import RemotePathNotExistError
 from marvin.errors import SSHConnectionError
+from marvin.errors import ExecCommandError
+from marvin.errors import SerialConnectionError
 
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-arguments
 
 class _Protocol(object):
-    """ The protocol definition """
+    """
+    The protocol definition
+    """
     def __init__(self, name):
         self.name = name
 
 class OpenSSHProtocol(_Protocol):
-    """ The openssh protocol definition """
+    """
+    The openssh protocol definition
+    """
     def __init__(self, address, port, user, password, timeout):
         """
         :param address: the target address
@@ -47,7 +55,9 @@ class OpenSSHProtocol(_Protocol):
         self.timeout = timeout
 
 class SFTPProtocol(_Protocol):
-    """ The sftp protocol definition """
+    """
+    The sftp protocol definition
+    """
     def __init__(self, address, port, user, password, timeout):
         """
         :param address: the target address
@@ -69,19 +79,50 @@ class SFTPProtocol(_Protocol):
         self.timeout = timeout
 
 class DataItem(object):
-    """ The data item to transfer """
+    """
+    The data item to transfer
+    """
     def __init__(self, source, destination, target):
         self.source = source
         self.destination = destination
         self.target = target
 
-class OpenSSH:
-    """ The openssh protocol handler """
+class CommandStream(object):
+    """
+    The command stream is used to handle a command execution.
+    """
+    def cmd_executing(self, command):
+        """
+        Raised when the command is going to be executed.
+        :param command: the command executing
+        :type command: str
+        """
+        raise NotImplementedError("please implement this method")
 
+    def handle_stdout_line(self, line):
+        """
+        Raised when a command stdout line has been acquired.
+        :param line: stdout read line
+        :type line: str
+        """
+        raise NotImplementedError("please implement this method")
+
+    def cmd_completed(self, result):
+        """
+        Raised when a command has been completed.
+        :param result: the command result when it's completed
+        :type result: str
+        """
+        raise NotImplementedError("please implement this method")
+
+class OpenSSH:
+    """
+    The openssh protocol handler
+    """
     def __init__(self, protocol):
         """
         :param protocol: the protocol definition
-        :type protocol: OpenSSHProtocol
+        :type protocol: OpenSSHProtocol or SFTPProtocol
         :raises: NotImplementedError
         """
         if not isinstance(protocol, OpenSSHProtocol) and \
@@ -220,20 +261,20 @@ class OpenSSH:
         else:
             sftp.remove(pathtoremove)
 
-    def sftp_transfer(self, data, item_callback=None, transfer_callback=None):
+    def sftp_transfer(self, data, icallback=None, tcallback=None):
         """
         Transfer data from/to target using a the *sftp* protocol.
 
         :param data: the list of data items to transfer
         :type data: list(DataItem)
-        :param item_callback:
+        :param icallback:
             optional callback defined as ``funct(str, str)``, where arguments
             are source and destination paths.
-        :type item_callback: callable
-        :param transfer_callback:
+        :type icallback: callable
+        :param tcallback:
             optional callback defined as ``funct(int, int)``, where arguments
             are bytes transferred so far and the total bytes.
-        :type transfer_callback: callable
+        :type tcallback: callable
         :raises ConnectionError: if there's a connection problem
         :raises LocalPathNotExistError: if local path doesn't exist
         :raises RemotePathNotExistError: if remote path doesn't exist
@@ -257,12 +298,12 @@ class OpenSSH:
                 if item.target == "remote":
                     self._sftp_put_path(sftp, \
                         item.source, item.destination, \
-                        item_callback, transfer_callback)
+                        icallback, tcallback)
                 else: # local
                     try:
                         self._sftp_get_path(sftp, \
                             item.source, item.destination, \
-                            item_callback, transfer_callback)
+                            icallback, tcallback)
                     except IOError as ex:
                         raise RemotePathNotExistError(\
                             "'%s' doesn't exist"%item.source) from ex
@@ -297,21 +338,14 @@ class OpenSSH:
                     raise RemotePathNotExistError(\
                         "'%s' doesn't exist"%item) from ex
 
-    def ssh_execute(self, commands, item_callback=None, exec_callback=None):
+    def ssh_execute(self, commands, stream=None):
         """
         Execute a command on target using the *ssh* protocol.
 
         :param commands: the list of commands to execute
         :type commands: list(str)
-        :param item_callback: optional callback used to trace the command
-            stdout. The function is defined as ``funct(str, io, io)`` where
-            arguments are command, stdout and stderr.
-        :type item_callback: callable
-        :param exec_callback: optional callback raised when a command has been
-            executed. The function is defined as
-            ``funct(str, str, str, str)`` where arguments are command,
-            passing, failing defined by the user and the command's return value.
-        :type exec_callback: callable
+        :param stream: the optional command stream
+        :type stream: CommandStream
         :raises ConnectionError: if there's a connection problem
         :returns: a list of commands return codes
         """
@@ -322,26 +356,185 @@ class OpenSSH:
         results = []
 
         with self._ssh_connect_to_target(self._protocol) as ssh:
+            # run commands
             for command in commands:
-                stdin, stdout, stderr = ssh.exec_command(\
-                    command, \
-                    timeout=timeout, \
-                    get_pty=True)
+                # create the stream channel
+                tran = ssh.get_transport()
+                chan = tran.open_session(timeout=timeout)
+                chan.settimeout(timeout)
 
-                if item_callback:
-                    item_callback(command, stdout, stderr)
+                # request error stream to be merged with the remote pty terminal
+                chan.set_combine_stderr(True)
+                chan.get_pty()
 
-                result = stdout.channel.recv_exit_status()
+                if stream:
+                    # send command executing event
+                    stream.cmd_executing(command)
 
-                if exec_callback:
-                    exec_callback(command, str(result))
+                try:
+                    chan.exec_command(command)
+                except paramiko.SSHException as ex:
+                    raise ExecCommandError("%s"%ex) from ex
+
+                result = None
+
+                with chan.makefile('r', -1) as stdout:
+                    if stream:
+                        # send stdout line
+                        for line in iter(stdout.readline, ""):
+                            stream.handle_stdout_line(line)
+
+                    result = stdout.channel.recv_exit_status()
+
+                    if stream:
+                        # send command result
+                        stream.cmd_completed(str(result))
 
                 results.append(result)
-
-                stdin.close()
-                stdout.close()
-                stderr.close()
 
         self._logger.debug("results=%s", results)
 
         return results
+
+class SerialProtocol(_Protocol):
+    """
+    The serial protocol definition.
+    """
+    def __init__(self, port, baudrate, parity, stop_bits, data_bits, timeout):
+        """
+        :param port: the serial port
+        :type port: str
+        :param baudrate: the serial baudrate
+        :type baudrate: int
+        :param parity: the number of parity bits
+        :type parity: int
+        :param stop_bits: the number of stop bits
+        :type stop_bits: int
+        :param data_bits: the number of data bits
+        :type data_bits: int
+        :param timeout: the command timeout
+        :type timeout: float
+        """
+        super().__init__("serial")
+        self.port = port
+        self.baudrate = baudrate
+        self.parity = parity
+        self.stop_bits = stop_bits
+        self.data_bits = data_bits
+        self.timeout = timeout
+
+class Serial:
+    """
+    The serial protocol handler
+    """
+    def __init__(self, protocol):
+        """
+        :param protocol: the protocol definition
+        :type protocol: SerialProtocol
+        """
+        self._protocol = protocol
+
+        self._logger = logging.getLogger(__name__)
+        self._logger.debug("protocol=%s", protocol)
+
+        self._port = self._protocol.port
+        if self._protocol.port == "loop":
+            self._port = "loop://" # special pySerial port
+
+        self._parity = serial.PARITY_NONE
+        if self._protocol.parity == 'odd':
+            self._parity = serial.PARITY_ODD
+        elif self._protocol.parity == 'even':
+            self._parity = serial.PARITY_EVEN
+        elif self._protocol.parity == 'none':
+            self._parity = serial.PARITY_NONE
+        else:
+            raise NotImplementedError("parity version not suppoted")
+
+        self._data_bits = serial.FIVEBITS
+        if self._protocol.data_bits == 5:
+            self._data_bits = serial.FIVEBITS
+        elif self._protocol.data_bits == 6:
+            self._data_bits = serial.SIXBITS
+        elif self._protocol.data_bits == 7:
+            self._data_bits = serial.SEVENBITS
+        elif self._protocol.data_bits == 8:
+            self._data_bits = serial.EIGHTBITS
+        else:
+            raise ValueError("data bits value not suppoted")
+
+        self._stop_bits = serial.STOPBITS_ONE
+        if self._protocol.stop_bits == 1.0:
+            self._stop_bits = serial.STOPBITS_ONE
+        elif self._protocol.stop_bits == 1.5:
+            self._stop_bits = serial.STOPBITS_ONE_POINT_FIVE
+        elif self._protocol.stop_bits == 2.0:
+            self._stop_bits = serial.STOPBITS_TWO
+        else:
+            raise ValueError("stop bits value not suppoted")
+
+    def send_command(self, commands, stream=None):
+        """
+        Send commands through the serial port.
+        :param commands: the commands to send
+        :type commands: list(str)
+        :param stream: the command stream handler
+        :type stream: CommandStream
+        :raises: ExecCommandError
+        """
+        self._logger.debug("execute commands using 'serial' protocol")
+        self._logger.debug("commands=%s", commands)
+
+        retvalues = []
+
+        sio = None
+        ser = None
+        try:
+            ser = serial.serial_for_url(self._port, \
+                        self._protocol.baudrate, \
+                        self._data_bits, \
+                        self._parity, \
+                        self._stop_bits, \
+                        timeout=self._protocol.timeout)
+
+            sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
+        except serial.SerialException as ex:
+            raise SerialConnectionError("%s"%ex)
+
+        for command in commands:
+            self._logger.debug("executing command '%s'", command)
+
+            # notify command execution
+            if stream:
+                stream.cmd_executing(command)
+
+            # return value is the last line of the serial command output
+            retvalue = ""
+
+            try:
+                sio.write(command)
+
+                while True:
+                    sio.flush()
+                    line = sio.readline()
+
+                    # notify line has been acquired
+                    if stream:
+                        stream.handle_stdout_line(line)
+
+                    if line:
+                        retvalue = line
+                        break
+
+                # notify command completion
+                if stream:
+                    stream.cmd_completed(retvalue)
+            except IOError as ex:
+                raise ExecCommandError("%s"%ex) from ex
+            finally:
+                sio.close()
+                ser.close()
+
+            retvalues.append(retvalue)
+
+        return retvalues

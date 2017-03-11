@@ -118,6 +118,7 @@ class ReportWriter:
         events.cleanupTargetPath += self._print_cleanup_target_path
         events.executeStarted += self._print_execute_started
         events.executeCommandStarted += self._print_exec_command
+        events.executeStreamLine += self._print_exec_line
         events.executeCommandCompleted += self._print_exec_result
         events.collectStarted += self._print_collect_started
 
@@ -131,12 +132,6 @@ class ReportWriter:
     def _write_file(self, text):
         if self._freport:
             self._freport.write(text)
-
-    def _write_stream(self, stream):
-        for line in iter(stream.readline, ""):
-            if not line:
-                break
-            self._write_file(line)
 
     def _print_exception(self, ex):
         self._write_file("\n\n%s"%ex)
@@ -186,22 +181,19 @@ class ReportWriter:
         else:
             self._print_fail()
 
-    def _print_exec_command(self, command, stdout, stderr):
+    def _print_exec_command(self, command):
         self._write_file("executing '%s'...\n"%command)
 
-        self._write_file("STDOUT:\n")
-        self._write_stream(stdout)
+    def _print_exec_line(self, line):
+        self._write_file(line)
 
-        self._write_file("STDERR:\n")
-        self._write_stream(stderr)
-
-    def _print_exec_result(self, command, passing, failing, result):
+    def _print_exec_result(self, passing, failing, result):
         if result == passing:
-            self._write_file("'%s' PASSED (%s)\n"%(command, result))
+            self._write_file("PASSED (%s)\n"%(result))
         elif result == failing:
-            self._write_file("'%s' FAILED (%s)\n"%(command, result))
+            self._write_file("FAILED (%s)\n"%(result))
         else:
-            self._write_file("'%s' UNKNOWN (%s)\n"%(command, result))
+            self._write_file("UNKNOWN (%s)\n"%(result))
 
     def _print_deploy_started(self):
         self._write_file("deploy started...\n")

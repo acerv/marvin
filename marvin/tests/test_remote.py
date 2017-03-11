@@ -15,6 +15,7 @@ from marvin.remote import OpenSSH
 from marvin.remote import OpenSSHProtocol
 from marvin.remote import SFTPProtocol
 from marvin.remote import DataItem
+from marvin.remote import CommandStream
 
 class TestRemote(unittest.TestCase):
     """ Test the remote module """
@@ -111,6 +112,24 @@ class TestRemote(unittest.TestCase):
         self.assertIsNotNone(stdout)
         self.assertIsNotNone(stderr)
 
+    def _create_stream(self):
+        class StreamTester(CommandStream):
+            """ CommandStream tester """
+            def __init__(self, tester):
+                self._tester = tester
+
+            def cmd_executing(self, command):
+                self._tester.assertIn(command, self._tester.commands)
+
+            def handle_stdout_line(self, line):
+                self._tester.assertIsNotNone(line)
+
+            def cmd_completed(self, result):
+                self._tester.assertIn(result, ['0', '1'])
+
+        stream = StreamTester(self)
+        return stream
+
     def test_ssh_execute(self):
         """ test ssh_execute function """
         protocol = OpenSSHProtocol(
@@ -121,5 +140,5 @@ class TestRemote(unittest.TestCase):
 
         ssh = OpenSSH(protocol)
 
-        self.assertEqual(ssh.ssh_execute(self.commands, \
-            self._test_execute_callback), [0, 1])
+        stream = self._create_stream()
+        self.assertEqual(ssh.ssh_execute(self.commands, stream), [0, 1])
