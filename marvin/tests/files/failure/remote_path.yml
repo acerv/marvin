@@ -18,4 +18,3 @@ collect:
         # raises RemotePathNotExistError
         - source: /data/this_file_does_not_exist.txt
           dest  : you_really_think_this_is_going_to_work.txt
-          type  : file

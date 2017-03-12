@@ -124,6 +124,7 @@ map:
                             type: str
                         type:
                             type: str
+                            enum: ['file']
     execute:
         map:
             protocol:
@@ -157,6 +158,4 @@ map:
                             type: str
                         dest:
                             required: true
-                            type: str
-                        type:
                             type: str

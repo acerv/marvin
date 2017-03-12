@@ -12,4 +12,3 @@ collect:
     transfer:
         - source: ~/testfile.txt
           dest: testfile.txt
-          type  : file
