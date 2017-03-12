@@ -360,12 +360,17 @@ class OpenSSH:
             for command in commands:
                 # create the stream channel
                 tran = ssh.get_transport()
-                chan = tran.open_session(timeout=timeout)
-                chan.settimeout(timeout)
+                chan = None
 
-                # request error stream to be merged with the remote pty terminal
-                chan.set_combine_stderr(True)
-                chan.get_pty()
+                try:
+                    chan = tran.open_session(timeout=timeout)
+                    chan.settimeout(timeout)
+
+                    # request error stream to be merged with the remote pty terminal
+                    chan.set_combine_stderr(True)
+                    chan.get_pty()
+                except paramiko.SSHException as ex:
+                    raise SSHConnectionError("%s"%ex) from ex
 
                 if stream:
                     # send command executing event
@@ -384,7 +389,7 @@ class OpenSSH:
                         for line in iter(stdout.readline, ""):
                             stream.handle_stdout_line(line)
 
-                    result = stdout.channel.recv_exit_status()
+                    result = str(stdout.channel.recv_exit_status())
 
                     if stream:
                         # send command result
@@ -499,19 +504,19 @@ class Serial:
 
             sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
         except serial.SerialException as ex:
-            raise SerialConnectionError("%s"%ex)
+            raise SerialConnectionError("%s"%ex) from ex
 
-        for command in commands:
-            self._logger.debug("executing command '%s'", command)
+        try:
+            for command in commands:
+                self._logger.debug("executing command '%s'", command)
 
-            # notify command execution
-            if stream:
-                stream.cmd_executing(command)
+                # notify command execution
+                if stream:
+                    stream.cmd_executing(command)
 
-            # return value is the last line of the serial command output
-            retvalue = ""
+                # return value is the last line of the serial command output
+                retvalue = ""
 
-            try:
                 sio.write(command)
 
                 while True:
@@ -529,12 +534,12 @@ class Serial:
                 # notify command completion
                 if stream:
                     stream.cmd_completed(retvalue)
-            except IOError as ex:
-                raise ExecCommandError("%s"%ex) from ex
-            finally:
-                sio.close()
-                ser.close()
 
-            retvalues.append(retvalue)
+                retvalues.append(retvalue)
+        except IOError as ex:
+            raise ExecCommandError("%s"%ex) from ex
+        finally:
+            sio.close()
+            ser.close()
 
         return retvalues
