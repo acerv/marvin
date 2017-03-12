@@ -72,38 +72,6 @@ class TestTester(unittest.TestCase):
             core = Core()
             core.load(testfile, self.reportsdir)
 
-    def test_ssh_address_failure(self):
-        """ Test if SSHConnectionError is raised when address is wrong """
-        testfile = os.path.join(self.currdir, "files", "failure", "ssh_address.yml")
-        with self.assertRaises(SSHConnectionError):
-            core = Core()
-            core.load(testfile, self.reportsdir)
-            core.execute.run()
-
-    def test_ssh_port_failure(self):
-        """ Test if SSHConnectionError is raised when port is wrong """
-        testfile = os.path.join(self.currdir, "files", "failure", "ssh_port.yml")
-        with self.assertRaises(SSHConnectionError):
-            core = Core()
-            core.load(testfile, self.reportsdir)
-            core.execute.run()
-
-    def test_ssh_user_failure(self):
-        """ Test if SSHConnectionError is raised when user is wrong """
-        testfile = os.path.join(self.currdir, "files", "failure", "ssh_user.yml")
-        with self.assertRaises(SSHConnectionError):
-            core = Core()
-            core.load(testfile, self.reportsdir)
-            core.execute.run()
-
-    def test_ssh_pwd_failure(self):
-        """ Test if SSHConnectionError is raised when password is wrong """
-        testfile = os.path.join(self.currdir, "files", "failure", "ssh_password.yml")
-        with self.assertRaises(SSHConnectionError):
-            core = Core()
-            core.load(testfile, self.reportsdir)
-            core.execute.run()
-
     def test_core_execute_success(self):
         """ Test execute stage when it success """
         testfile = os.path.join(self.currdir, "files", "success", "execute.yml")
