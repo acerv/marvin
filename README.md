@@ -151,7 +151,7 @@ Where paramters are:
 * `type`: (optional) the source type (ie file, git, http etc.). Some of the
     protocols are not implemented yet
 
-## Defined the execute stage
+## Define the execute stage
 The execute stage can be defined as following:
 
     execute:
