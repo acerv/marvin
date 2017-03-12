@@ -36,6 +36,52 @@ Yes, eventually, you can write a file without stages (who wants to do that?
 :-)). During the stages, a report directory is created and populated with
 informations about the running test.
 
+# An example using SSH/SFTP protocol
+
+    description: Transfer and execute a test script fetching its report file
+    name       : test
+    version    : '1.0'
+    author     : Andrea Cervesato
+
+    protocols:
+        sftp:
+            address : &ssh_addr localhost
+            port    : &ssh_port 22
+            user    : &ssh_user ""
+            password: &ssh_pass ""
+            timeout : &ssh_tout 5.0
+
+        ssh:
+            address : *ssh_addr
+            port    : *ssh_port
+            user    : *ssh_user
+            password: *ssh_pass
+            timeout : *ssh_tout
+
+    deploy:
+        protocol: sftp
+        delete: true
+
+        transfer:
+            - source: ./test_files/
+              dest  : /home/user/test
+              type  : file
+
+    execute:
+        protocol: ssh
+
+        commands:
+            - script: "chmod +x /home/user/test/setup.sh; /home/user/test/setup.sh"
+              passing: "0"
+              failing: "1"
+
+    collect:
+        protocol: sftp
+
+        transfer:
+            - source: /home/user/test/results.log
+              dest  : results.log
+
 ## Define the SSH protocol
 The SSH protocol is set in the `protocols` section and it's defined as
 following (all parameters are required):
@@ -153,52 +199,6 @@ Each file/directory path must be defined in the `transfer` section as following:
 Where paramters are:
 * `source`: the path to transfer
 * `dest`: the location of the path to transfer on host
-
-# An example using SSH/SFTP protocol
-
-    description: Transfer and execute a test script fetching its report file
-    name       : test
-    version    : '1.0'
-    author     : Andrea Cervesato
-
-    protocols:
-        sftp:
-            address : &ssh_addr localhost
-            port    : &ssh_port 22
-            user    : &ssh_user ""
-            password: &ssh_pass ""
-            timeout : &ssh_tout 5.0
-
-        ssh:
-            address : *ssh_addr
-            port    : *ssh_port
-            user    : *ssh_user
-            password: *ssh_pass
-            timeout : *ssh_tout
-
-    deploy:
-        protocol: sftp
-        delete: true
-
-        transfer:
-            - source: ./test_files/
-              dest  : /home/user/test
-              type  : file
-
-    execute:
-        protocol: ssh
-
-        commands:
-            - script: "chmod +x /home/user/test/setup.sh; /home/user/test/setup.sh"
-              passing: "0"
-              failing: "1"
-
-    collect:
-        protocol: sftp
-
-        transfer:
-            - source: /home/user/test/results.log
-              dest  : results.log
 
 # Python version
 The python version used by the framework is the 3.5.3. If your system does not
