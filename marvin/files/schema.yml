@@ -88,10 +88,8 @@ map:
                         enum: ['none', 'even', 'odd']
                     stop_bits:
                         required: true
-                        type: number
-                        range:
-                            min: 1
-                            max: 2
+                        type: float
+                        enum: [1.0, 1.5, 2.0]
                     data_bits:
                         required: true
                         type: int
