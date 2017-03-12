@@ -52,7 +52,7 @@ map:
                         required: true
                         type: float
                         range:
-                            min: 1.0
+                            min: 0.0
                             max: 120.0
             ssh:
                 map:
@@ -72,7 +72,7 @@ map:
                         required: true
                         type: float
                         range:
-                            min: 1.0
+                            min: 0.0
                             max: 120.0
             serial:
                 map:
@@ -82,6 +82,9 @@ map:
                     baudrate:
                         required: true
                         type: int
+                        range:
+                            min: 50
+                            max: 4000000
                     parity:
                         required: true
                         type: str
@@ -100,7 +103,7 @@ map:
                         required: true
                         type: float
                         range:
-                            min: 1.0
+                            min: 0.0
                             max: 120.0
     deploy:
         map:
