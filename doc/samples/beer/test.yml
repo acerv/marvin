@@ -1,0 +1,36 @@
+description: print a beer on remote terminal
+name       : beer_test
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    sftp:
+        address : &ssh_addr localhost
+        port    : &ssh_port 22
+        user    : &ssh_user ""
+        password: &ssh_pass ""
+        timeout : &ssh_tout 5.0
+
+    ssh:
+        address : *ssh_addr
+        port    : *ssh_port
+        user    : *ssh_user
+        password: *ssh_pass
+        timeout : *ssh_tout
+
+deploy:
+    protocol: sftp
+    delete: true
+
+    transfer:
+        - source: ./files/
+          dest  : /home/sawk/beer_test
+          type  : file
+
+execute:
+    protocol: ssh
+
+    commands:
+        - script: "chmod +x /home/sawk/beer_test/print.sh; /home/sawk/beer_test/print.sh"
+          passing: "0"
+          failing: "1"
