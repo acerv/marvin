@@ -1,5 +1,23 @@
 [![Build Status](https://travis-ci.org/acerv/marvin.svg?branch=master)](https://travis-ci.org/acerv/marvin)
 
+# Table of contents
+1. [Introduction](#introduction)
+2. [SSH/SFTP example](#sshsftp-example)
+3. [Define protocols](#define-protocols)
+    1. [SSH protocol](#ssh-protocol)
+    2. [SFTP protocol](#sftp-protocol)
+    3. [Serial protocol](#serial-protocol)
+4. [Define stages](#define-stages)
+    1. [Deploy stage](#deploy-stage)
+    2. [Execute stage](#execute-stage)
+    3. [Collect stage](#collect-stage)
+5. [Python version](#python-version)
+6. [Install/uninstall framework](#installuninstall-framework)
+7. [Running tests](#running-tests)
+8. [Framework unittests](#framework-unittests)
+9. [TODO](#todo)
+10. [Under evaluation](#under-evaluation)
+
 # Introduction
 Marvin is a framework made for remote testing. At the moment, the following
 protocols are supported:
@@ -14,8 +32,7 @@ In the future, it will support other protocols such as:
 
 A test file is created using the 
 [Yaml syntax](https://learnxinyminutes.com/docs/yaml/)
-and it defines the following
-stages:
+and it defines the following stages:
 * `header`: description, name, version, author of the test file
 * `protocols`: the protocols informations
 * `deploy`: the deploy stage. It transfer data from local host to the target
@@ -36,9 +53,9 @@ Yes, eventually, you can write a file without stages (who wants to do that?
 :-)). During the stages, a report directory is created and populated with
 informations about the running test.
 
-# An example using SSH/SFTP protocol
+# SSH/SFTP example
 
-    description: Transfer and execute a test script fetching its report file
+    description: Transfer and execute a test script fetching the report file
     name       : test
     version    : '1.0'
     author     : Andrea Cervesato
@@ -82,7 +99,11 @@ informations about the running test.
             - source: /home/user/test/results.log
               dest  : results.log
 
-## Define the SSH protocol
+# Define protocols
+The `protocols` section is __not optional__ and it defines the protocols
+configurations.
+
+## SSH protocol
 The SSH protocol is set in the `protocols` section and it's defined as
 following (all parameters are required):
 
@@ -93,7 +114,7 @@ following (all parameters are required):
         password: ""
         timeout : 5.0
 
-## Define the SFTP protocol
+## SFTP protocol
 The SFTP protocol is set in the `protocols` section and it's defined as
 following (all parameters are required):
 
@@ -105,7 +126,7 @@ following (all parameters are required):
         password: ""
         timeout : 5.0
 
-## Define the Serial protocol
+## Serial protocol
 The serial protocol is set in the `protocols` section and it's defined as
 following (all parameters are required):
 
@@ -118,15 +139,21 @@ following (all parameters are required):
         timeout  : 1.0
 
 Where parameters are:
-* `port`: the serial port (ie `/dev/ttyUSB0`). `loop` is a special port that
-    is echoing a string back to the sender
+* `port`: the serial port (ie `/dev/ttyUSB0`). `loop` is a special port 
+    echoing a string back to the sender
 * `baudrate`: 50 up to 4000000
 * `parity`: 'none', 'even', 'odd'
 * `stop_bits`: 1, 1.5, 2
 * `data_bits`: 5, 6, 7, 8
 * `timeout`: 0.0 up to 120.0
 
-## Define the deploy stage
+# Define stages
+The test stages are:
+* `deploy`: (optional) deploy system, transferring data on target
+* `execute`: (optional) execute scripts and commands on target
+* `collect`: (optional) collect data from target after `execute`
+
+## Deploy stage
 The deploy stage can be defined as following:
 
     deploy:
@@ -145,13 +172,13 @@ Each file/directory path must be defined in the `transfer` section as following:
           dest  : testfile0.txt
           type  : file
 
-Where paramters are:
+Where parameters are:
 * `source`: the path to transfer
 * `dest`: the location of the path to transfer on target
 * `type`: (optional) the source type (ie file, git, http etc.). Some of the
     protocols are not implemented yet
 
-## Define the execute stage
+## Execute stage
 The execute stage can be defined as following:
 
     execute:
@@ -181,7 +208,7 @@ Where parameters are:
 When a command doesn't return the `passing` or `failing` string, the framework
 will mark the command result as `unknown`.
 
-## Define the collect stage
+## Collect stage
 The collect stage can be defined as following:
 
     collect:
@@ -210,7 +237,7 @@ Follow the pyenv instructions to setup your environment, then run:
 
     pyenv install 3.5.3
 
-# Install/uninstall the framework
+# Install/uninstall framework
 Once the correct python version is installed, to install marvin run:
 
     make install
@@ -228,7 +255,7 @@ Use the `marvin` command to execute tests:
 
     marvin -r reports <your tests list>
 
-# Launch framework unittests
+# Framework unittests
 The framework uses `py.test` to run unittests, which are located in 
 `marvin/tests`:
 
