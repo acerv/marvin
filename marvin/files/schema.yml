@@ -124,7 +124,7 @@ map:
                             type: str
                         type:
                             type: str
-                            enum: ['file', 'http']
+                            enum: ['file', 'http', 'git']
     execute:
         map:
             protocol:

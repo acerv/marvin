@@ -10,6 +10,7 @@
 import os
 import logging
 import urllib.request
+from git import Repo as gitrepo
 from marvin.remote import OpenSSH
 from marvin.remote import DataItem
 from marvin.remote import OpenSSHProtocol
@@ -66,6 +67,13 @@ class DeployDataItem(TransferDataItem):
 
             # download data using HTTP protocol
             urllib.request.urlretrieve(self.src, src)
+        elif self.src_type == "git":
+            urlfilename = self.src.split("?")[0].split("/")[-1]
+            src = os.path.join(self._reportdir.remotedata, urlfilename)
+            dst = self.dst
+
+            # download data using GIT protocol
+            gitrepo.clone_from(self.src, src)
         else:
             raise NotImplementedError("'%s' is not implemented" % self.src_type)
 

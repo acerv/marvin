@@ -19,16 +19,19 @@
 10. [Under evaluation](#under-evaluation)
 
 # Introduction
-Marvin is a framework made for remote testing. At the moment, the following
-protocols are supported:
+Marvin is a framework made for remote testing. It's programming language
+agnostic, which means you don't need to care about learning programming
+languages in order to write Marvin tests.
+
+At the moment, the following protocols are supported:
 * ssh
 * sftp
 * serial
+* git
+* http/https
 
 In the future, it will support other protocols such as:
 * ftp
-* git
-* http/https
 
 A test file is created using the 
 [Yaml syntax](https://learnxinyminutes.com/docs/yaml/)
@@ -175,8 +178,7 @@ Each file/directory path must be defined in the `transfer` section as following:
 Where parameters are:
 * `source`: the path to transfer
 * `dest`: the location of the path to transfer on target
-* `type`: (optional) the source type (ie file, git, http etc.). Some of the
-    protocols are not implemented yet
+* `type`: (optional) the source type. Possible values are: `file`, `git`, `http`
 
 ## Execute stage
 The execute stage can be defined as following:
@@ -267,10 +269,11 @@ To run unittests, simply run:
 
 # TODO
 - [x] serial protocol
-- [ ] ftp protocol support
-- [ ] git protocol support
+- [x] git protocol support
 - [x] http/https protocol support
 - [ ] JUnit reports
+- [ ] send data to remote targets during collect stage
+- [ ] ftp protocol support
 
 # Rejected
 - [ ] replace paramiko library with parallel-ssh

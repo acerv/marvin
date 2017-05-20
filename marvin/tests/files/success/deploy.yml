@@ -29,3 +29,7 @@ deploy:
         - source: http://www.google.com/index.html
           dest  : index.html
           type  : http
+
+        - source: https://github.com/acerv/marvin.git
+          dest  : marvin.git
+          type  : git
