@@ -18,13 +18,13 @@ deploy:
 
     transfer:
         - source: ./testfile01.bin
-          dest  : /home/sshtest/testfile01.bin
+          dest  : /home/sawk/testfile01.bin
           type  : file
         
         - source: ./testfile02.bin
-          dest  : /home/sshtest/testfile02.bin
+          dest  : /home/sawk/testfile02.bin
           type  : file
 
         - source: ./testfile03.bin
-          dest  : /home/sshtest/testfile03.bin
+          dest  : /home/sawk/testfile03.bin
           type  : file
