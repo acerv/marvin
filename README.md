@@ -58,8 +58,8 @@ informations about the running test.
 
 # SSH/SFTP example
 
-    description: Transfer and execute a setup script
-    name       : setup_test
+    description: Test my remote server
+    name       : server_test
     version    : '1.0 beta2'
     author     : Andrea Cervesato
 
@@ -67,10 +67,10 @@ informations about the running test.
         # the following parameters must be defined in order to use SSH and SFTP
 
         sftp:
-            address : &ssh_addr localhost
+            address : &ssh_addr "10.0.2.18"
             port    : &ssh_port 22
-            user    : &ssh_user ""
-            password: &ssh_pass ""
+            user    : &ssh_user "www"
+            password: &ssh_pass "www1234"
             timeout : &ssh_tout 5.0
 
         ssh:
