@@ -58,12 +58,14 @@ informations about the running test.
 
 # SSH/SFTP example
 
-    description: Transfer and execute a test script fetching the report file
-    name       : test
-    version    : '1.0'
+    description: Transfer and execute a setup script
+    name       : setup_test
+    version    : '1.0 beta2'
     author     : Andrea Cervesato
 
     protocols:
+        # the following parameters must be defined in order to use SSH and SFTP
+
         sftp:
             address : &ssh_addr localhost
             port    : &ssh_port 22
@@ -80,18 +82,46 @@ informations about the running test.
 
     deploy:
         protocol: sftp
+
+        # if true, transferred data will be deleted after collect stage
         delete: true
 
         transfer:
-            - source: ./test_files/
-              dest  : /home/user/test
-              type  : file
+            # marvin will download the following script on target's
+            # /var/marvin/data/setup.sh path
+
+            - source: http://mywebsite.com/setup.sh
+              dest  : /var/marvin/data/setup.sh
+              type  : http
+
+            - source: http://mywebsite.com/tests.git
+              dest  : /var/marvin/data/tests.git
+              type  : git
 
     execute:
         protocol: ssh
 
         commands:
-            - script: "chmod +x /home/user/test/setup.sh; /home/user/test/setup.sh"
+            # marvin will execute the downloaded scripts, checking if they
+            # succeeded or failed
+
+            - script : "sh -c /var/marvin/data/setup.sh"
+              passing: "0"
+              failing: "1"
+
+            - script : "sh -c /var/marvin/data/tests.git/hardware_tests.sh"
+              passing: "0"
+              failing: "1"
+
+            - script : "sh -c /var/marvin/data/tests.git/stress_tests.sh"
+              passing: "0"
+              failing: "1"
+
+            - script : "sh -c /var/marvin/data/tests.git/functional_tests.sh"
+              passing: "0"
+              failing: "1"
+
+            - script : "sh -c /var/marvin/data/tests.git/unit_tests.sh"
               passing: "0"
               failing: "1"
 
@@ -99,7 +129,9 @@ informations about the running test.
         protocol: sftp
 
         transfer:
-            - source: /home/user/test/results.log
+            # marvin will fetch the setup results in the hosting machine
+
+            - source: /var/marvin/data/setup_results.log
               dest  : results.log
 
 # Define protocols
