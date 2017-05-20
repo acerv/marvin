@@ -1,0 +1,36 @@
+description: fetch data from HTTP and it transfer it on target
+name       : http_test
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    sftp:
+        address : &ssh_addr localhost
+        port    : &ssh_port 22
+        user    : &ssh_user ""
+        password: &ssh_pass ""
+        timeout : &ssh_tout 5.0
+
+    ssh:
+        address : *ssh_addr
+        port    : *ssh_port
+        user    : *ssh_user
+        password: *ssh_pass
+        timeout : *ssh_tout
+
+deploy:
+    protocol: sftp
+    delete: true
+
+    transfer:
+        - source: http://www.google.com/index.html
+          dest  : /home/sawk/index.html
+          type  : http 
+
+execute:
+    protocol: ssh
+
+    commands:
+        - script  : test -f /home/sawk/index.html
+          passing : "0"
+          failing : "1"

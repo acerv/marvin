@@ -269,7 +269,8 @@ To run unittests, simply run:
 - [x] serial protocol
 - [ ] ftp protocol support
 - [ ] git protocol support
-- [ ] http/https protocol support
+- [x] http/https protocol support
+- [ ] JUnit reports
 
 # Rejected
 - [ ] replace paramiko library with parallel-ssh

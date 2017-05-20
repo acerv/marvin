@@ -25,3 +25,7 @@ deploy:
 
         - source: ./testfile2.txt
           dest  : testfile2.txt
+
+        - source: http://www.google.com/index.html
+          dest  : index.html
+          type  : http

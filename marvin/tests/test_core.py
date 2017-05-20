@@ -14,7 +14,6 @@ from marvin.core import Core
 from marvin.errors import FileParseError
 from marvin.errors import LocalPathNotExistError
 from marvin.errors import RemotePathNotExistError
-from marvin.errors import SSHConnectionError
 
 class TestTester(unittest.TestCase):
     """ The tester unittest definition """

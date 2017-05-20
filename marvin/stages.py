@@ -9,6 +9,7 @@
 
 import os
 import logging
+import urllib.request
 from marvin.remote import OpenSSH
 from marvin.remote import DataItem
 from marvin.remote import OpenSSHProtocol
@@ -58,6 +59,13 @@ class DeployDataItem(TransferDataItem):
         if self.src_type == "file":
             src = self.src
             dst = self.dst
+        elif self.src_type == "http":
+            urlfilename = self.src.split("?")[0].split("/")[-1]
+            src = os.path.join(self._reportdir.remotedata, urlfilename)
+            dst = self.dst
+
+            # download data using HTTP protocol
+            urllib.request.urlretrieve(self.src, src)
         else:
             raise NotImplementedError("'%s' is not implemented" % self.src_type)
 
@@ -183,7 +191,7 @@ class DeployStage(Stage):
                 src_type = "file"
 
             # get the absolute path of the source
-            if not os.path.isabs(src):
+            if src_type == "file" and not os.path.isabs(src):
                 src = os.path.join(self.testdir, src)
 
             data = DeployDataItem(src, dst, src_type, self.reportdir)
