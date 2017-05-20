@@ -24,20 +24,20 @@ deploy:
 
     transfer:
         - source: setup.sh
-          dest  : /home/sshtest/setup.sh
+          dest  : /home/sawk/setup.sh
           type  : file
 
 execute:
     protocol: ssh
 
     commands:
-        - script  : chmod +x /home/sshtest/setup.sh
-        - script  : /home/sshtest/setup.sh
+        - script  : chmod +x /home/sawk/setup.sh
+        - script  : /home/sawk/setup.sh
 
 collect:
     protocol: sftp
 
     transfer:
-        - source: /home/sshtest/results.log
+        - source: /home/sawk/results.log
           dest  : results.log
 
