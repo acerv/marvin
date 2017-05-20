@@ -270,6 +270,8 @@ To run unittests, simply run:
 - [ ] ftp protocol support
 - [ ] git protocol support
 - [ ] http/https protocol support
+
+# Rejected
 - [ ] replace paramiko library with parallel-ssh
 
 # Under evaluation
