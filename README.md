@@ -1,22 +1,24 @@
 [![Build Status](https://travis-ci.org/acerv/marvin.svg?branch=master)](https://travis-ci.org/acerv/marvin)
 
 # Table of contents
-1. [Introduction](#introduction)
-2. [SSH/SFTP example](#sshsftp-example)
-3. [Define protocols](#define-protocols)
-    1. [SSH protocol](#ssh-protocol)
-    2. [SFTP protocol](#sftp-protocol)
-    3. [Serial protocol](#serial-protocol)
-4. [Define stages](#define-stages)
-    1. [Deploy stage](#deploy-stage)
-    2. [Execute stage](#execute-stage)
-    3. [Collect stage](#collect-stage)
-5. [Python version](#python-version)
-6. [Install/uninstall framework](#installuninstall-framework)
-7. [Running tests](#running-tests)
-8. [Framework unittests](#framework-unittests)
-9. [TODO](#todo)
-10. [Under evaluation](#under-evaluation)
+- [Introduction](#introduction)
+- [A Marvin test example](#a-marvin-test-example)
+- [Test file](#test-file)
+- [Define protocols](#define-protocols)
+    - [SSH protocol](#ssh-protocol)
+    - [SFTP protocol](#sftp-protocol)
+    - [Serial protocol](#serial-protocol)
+- [Define stages](#define-stages)
+    - [Deploy stage](#deploy-stage)
+    - [Execute stage](#execute-stage)
+    - [Collect stage](#collect-stage)
+- [Python version](#python-version)
+- [Install/uninstall framework](#installuninstall-framework)
+- [Running tests](#running-tests)
+- [Framework unittests](#framework-unittests)
+- [TODO](#todo)
+- [Rejected](#rejected)
+- [Under evaluation](#under-evaluation)
 
 # Introduction
 Marvin is a framework made for remote testing. Rather than other testing
@@ -26,40 +28,7 @@ for particular platforms/boards. Eventually, it is also possible to execute
 functional tests directly on Marvin's test file, using (for example) `serial`
 protocol.
 
-A test file is created using the 
-[Yaml syntax](https://learnxinyminutes.com/docs/yaml/)
-and it defines the following stages:
-* `header`: description, name, version, author of the test file
-* `protocols`: the protocols informations
-* `deploy`: the deploy stage. It transfer data from local host to the target
-* `execute`: the execute stage. It defines what commands must be executed on
-    target
-* `collect`: the collect stage. It defines what data must be fetched from the
-    target, when the `deploy` and `execute` stage are completed
-
-What happens when the Marvin framework reads a file is:
-* file syntax is validated
-* test definition is imported
-* deploy stage is launched (if defined)
-* execute stage is launched (if defined)
-* collect stage is launched (if defined)
-* target is cleaned by files which have been transferred (if deploy defines it)
-
-Yes, eventually, you can write a file without stages (who wants to do that? 
-:-)). During the stages, a report directory is created and populated with
-informations about the running test.
-
-At the moment, the following protocols are supported:
-* ssh
-* sftp
-* serial
-* git
-* http/https
-
-In the future, it will support other protocols such as:
-* ftp
-
-# SSH/SFTP example
+# A Marvin test example
 
     description: Test my remote server
     name       : server_test
@@ -67,7 +36,7 @@ In the future, it will support other protocols such as:
     author     : Andrea Cervesato
 
     protocols:
-        # the following parameters must be defined in order to use SSH and SFTP
+        # the following parameters must be defined in order to use protocols
 
         sftp:
             address : &ssh_addr "10.0.2.18"
@@ -82,6 +51,14 @@ In the future, it will support other protocols such as:
             user    : *ssh_user
             password: *ssh_pass
             timeout : *ssh_tout
+
+        serial:
+            port     : /dev/ttyUSB0
+            baudrate : 9600
+            parity   : 'odd'
+            stop_bits: 2
+            data_bits: 7
+            timeout  : 1.0
 
     deploy:
         protocol: sftp
@@ -146,6 +123,39 @@ In the future, it will support other protocols such as:
             - source: /var/marvin/data/setup_results.log
               dest  : results.log
 
+# Test file
+A test file is created using the 
+[Yaml syntax](https://learnxinyminutes.com/docs/yaml/)
+and it defines the following stages:
+* `header`: description, name, version, author of the test file
+* `protocols`: the protocols informations
+* `deploy`: the deploy stage. It transfer data from local host to the target
+* `execute`: the execute stage. It defines what commands must be executed on
+    target
+* `collect`: the collect stage. It defines what data must be fetched from the
+    target, when the `deploy` and `execute` stage are completed
+
+What happens when the Marvin framework reads a file is:
+* file syntax is validated
+* test definition is imported
+* deploy stage is launched (if defined)
+* execute stage is launched (if defined)
+* collect stage is launched (if defined)
+* target is cleaned by files which have been transferred (if deploy defines it)
+
+Yes, eventually, you can write a file without stages (who wants to do that? 
+:-)). During the stages, a report directory is created and populated with
+informations about the running test.
+
+At the moment, the following protocols are supported:
+* ssh
+* sftp
+* serial
+* git
+* http/https
+
+In the future, it will support other protocols such as:
+* ftp
 # Define protocols
 The `protocols` section is __not optional__ and it defines the protocols
 configurations.
