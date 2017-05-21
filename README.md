@@ -19,19 +19,9 @@
 10. [Under evaluation](#under-evaluation)
 
 # Introduction
-Marvin is a framework made for remote testing. It's programming language
-agnostic, which means you don't need to care about learning programming
-languages in order to write Marvin tests.
-
-At the moment, the following protocols are supported:
-* ssh
-* sftp
-* serial
-* git
-* http/https
-
-In the future, it will support other protocols such as:
-* ftp
+Marvin is a framework made for remote testing. Rather than other testing
+frameworks, it focuses mainly on tests execution, giving the ability to
+integrate third party tests, made on top of different programming languages.
 
 A test file is created using the 
 [Yaml syntax](https://learnxinyminutes.com/docs/yaml/)
@@ -55,6 +45,16 @@ What happens when the Marvin framework reads a file is:
 Yes, eventually, you can write a file without stages (who wants to do that? 
 :-)). During the stages, a report directory is created and populated with
 informations about the running test.
+
+At the moment, the following protocols are supported:
+* ssh
+* sftp
+* serial
+* git
+* http/https
+
+In the future, it will support other protocols such as:
+* ftp
 
 # SSH/SFTP example
 
