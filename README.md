@@ -21,7 +21,10 @@
 # Introduction
 Marvin is a framework made for remote testing. Rather than other testing
 frameworks, it focuses mainly on tests execution, giving the ability to
-integrate third party tests, made on top of different programming languages.
+integrate third party tests, made on top of different programming languages
+for particular platforms/boards. Eventually, it is also possible to execute
+functional tests directly on Marvin's test file, using (for example) `serial`
+protocol.
 
 A test file is created using the 
 [Yaml syntax](https://learnxinyminutes.com/docs/yaml/)
@@ -109,7 +112,11 @@ In the future, it will support other protocols such as:
               passing: "0"
               failing: "1"
 
-            - script : "sh -c /var/marvin/data/tests.git/hardware_tests.sh"
+            - script : "sh -c /var/marvin/data/tests.git/unit_tests.sh"
+              passing: "0"
+              failing: "1"
+              
+            - script : "sh -c /var/marvin/data/tests.git/functional_tests.sh"
               passing: "0"
               failing: "1"
 
@@ -117,11 +124,16 @@ In the future, it will support other protocols such as:
               passing: "0"
               failing: "1"
 
-            - script : "sh -c /var/marvin/data/tests.git/functional_tests.sh"
+            - script : "sh -c /var/marvin/data/tests.git/hardware_tests.sh"
               passing: "0"
               failing: "1"
 
-            - script : "sh -c /var/marvin/data/tests.git/unit_tests.sh"
+            - script  : "AT"
+              passing : "OK"
+              failing : ""
+              protocol: serial
+              
+            - script : "ping -c 1 www.google.it"
               passing: "0"
               failing: "1"
 
