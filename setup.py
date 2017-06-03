@@ -17,5 +17,8 @@ setup(name='marvin',
       author='Andrea Cervesato',
       author_email='andrea.cervesato@mailbox.org',
       packages=['marvin'],
+      package_data={
+          'marvin':['files/*.yml'],
+      },
       scripts=['bin/marvin']
      )
