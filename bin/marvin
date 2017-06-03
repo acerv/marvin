@@ -19,9 +19,8 @@ import argparse
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__))))
 
 import marvin
+from marvin.listeners import EventsListener
 from marvin.core import Core
-from marvin.report import ReportWriter
-from marvin.terminal import TerminalWriter
 
 def main(args):
     """
@@ -36,11 +35,11 @@ def main(args):
         core = Core()
 
         # show events on terminal
-        tw = TerminalWriter(sys.stdout)
+        tw = EventsListener("terminal")
         tw.listen(core.events)
 
         # write report file
-        rw = ReportWriter()
+        rw = EventsListener("logs")
         rw.listen(core.events)
 
         # load the test file and create the report directory
