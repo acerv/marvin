@@ -32,7 +32,11 @@ execute:
 
     commands:
         - script  : chmod +x /home/sawk/setup.sh
+          passing : '0'
+          failing : '1'
         - script  : /home/sawk/setup.sh
+          passing : '0'
+          failing : '1'
 
 collect:
     protocol: sftp

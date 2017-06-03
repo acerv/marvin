@@ -12,6 +12,7 @@ import sys
 import shutil
 import colorama
 from colorama import Fore, Style
+from junit_xml import TestCase, TestSuite
 
 class GenericEventsListener:
     """
@@ -384,6 +385,56 @@ class JUnitWriter(GenericEventsListener):
     """
     Listen to the core events and write a JUnit report
     """
+    def __init__(self):
+        self._test_cases = []
+        self._current_command = None
+        self._test_suite = None
+        self._reportdir = None
+        self._junitfile = None
+        self._cmd_stdout = ""
+        self._filename = None
 
     def listen(self, events):
-        pass
+        events.readFileStarted += self._save_filename
+        events.createReportDirCompleted += self._save_reportdir
+        events.executeCommandStarted += self._save_exec_command
+        events.executeStreamLine += self._save_exec_streamline
+        events.executeCommandCompleted += self._create_test_case
+        events.collectCompleted += self._write_junit_file
+
+    ###########################################
+    # SAVE INFORMATIONS
+    ###########################################
+    def _save_filename(self, name):
+        self._filename = name
+
+    def _save_reportdir(self, reportdir):
+        self._junitfile = os.path.join(reportdir.root, "report.xml")
+        self._reportdir = reportdir
+
+    def _save_exec_command(self, command):
+        self._current_command = command
+
+    def _save_exec_streamline(self, line):
+        self._cmd_stdout += line
+
+    ###########################################
+    # CREATE JUnit FILE
+    ###########################################
+    def _create_test_case(self, passing, failing, result):
+        test_case = None
+
+        if result == passing:
+            test_case = TestCase(self._current_command, stdout=self._cmd_stdout)
+        elif result == failing:
+            test_case = TestCase(self._current_command, stderr=self._cmd_stdout)
+            test_case.add_failure_info(self._cmd_stdout)
+        else: # consider unkown as passed
+            test_case = TestCase(self._current_command, stdout=self._cmd_stdout)
+
+        self._test_cases.append(test_case)
+
+    def _write_junit_file(self):
+        test_suite = TestSuite(self._filename, self._test_cases)
+        with open(self._junitfile, 'w') as junitfile:
+            TestSuite.to_file(junitfile, [test_suite])

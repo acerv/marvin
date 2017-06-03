@@ -323,7 +323,8 @@ To run unittests, simply run:
 - [x] serial protocol
 - [x] git protocol support
 - [x] http/https protocol support
-- [ ] JUnit reports
+- [x] JUnit reports
+- [ ] a better stdout, stderr handling with paramiko
 - [ ] send data to remote targets during collect stage
 - [ ] ftp protocol support
 

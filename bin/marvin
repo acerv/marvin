@@ -42,6 +42,10 @@ def main(args):
         rw = EventsListener("logs")
         rw.listen(core.events)
 
+        # write junit report file
+        jw = EventsListener("junit")
+        jw.listen(core.events)
+
         # load the test file and create the report directory
         core.load(test, args.reports)
 

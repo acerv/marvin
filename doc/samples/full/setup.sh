@@ -1,3 +1,2 @@
-#!/bin/sh
+#!/bin/bash
 dmesg > results.log
-exit 0
