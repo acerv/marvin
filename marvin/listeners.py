@@ -52,9 +52,15 @@ class EventsListener:
         elif name is "terminal":
             writer = TerminalWriter()
         elif name is "junit":
-            raise NotImplementedError()
+            writer = JUnitWriter()
 
         return writer
+
+    def listen(self, events):
+        """
+        Forward declaration for GenericEventsListener
+        """
+        raise NotImplementedError()
 
 class LogsWriter(GenericEventsListener):
     """
@@ -373,3 +379,11 @@ class TerminalWriter(GenericEventsListener):
 
     def _print_cleanup_completed(self):
         self._stdout.write("\n")
+
+class JUnitWriter(GenericEventsListener):
+    """
+    Listen to the core events and write a JUnit report
+    """
+
+    def listen(self, events):
+        pass

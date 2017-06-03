@@ -11,8 +11,6 @@ import os
 import shutil
 import unittest
 import marvin.report
-from marvin.report import ReportWriter
-from marvin.tests.test_events import TestCoreEvents
 
 class TestReport(unittest.TestCase):
     """ Test the report module """
@@ -41,11 +39,3 @@ class TestReport(unittest.TestCase):
         self.assertTrue(os.path.isdir(reportdir.root))
         self.assertTrue(os.path.isdir(reportdir.localdata))
         self.assertTrue(os.path.isdir(reportdir.remotedata))
-
-class TestReportWriter(TestCoreEvents):
-    """ test ReportWriter class """
-    def test_listen(self):
-        """ test the listen method """
-        report = ReportWriter()
-        self.assertFalse(report.listen(self.events))
-        self.test_events()
