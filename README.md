@@ -21,12 +21,10 @@
 - [Under evaluation](#under-evaluation)
 
 # Introduction
-Marvin is a framework made for remote testing. Rather than other testing
-frameworks, it focuses mainly on tests execution, giving the ability to
-integrate third party tests, made on top of different programming languages
-for particular platforms/boards. Eventually, it is also possible to execute
-functional tests directly on Marvin's test file, using (for example) `serial`
-protocol.
+The Marvin framework has been created with the idea of testing GNU/Linux
+embedded systems in the IoT and automotive context, giving a programming
+language agnostic system where it's possibile to build and merge different
+tests suites.
 
 # A Marvin test example
 
