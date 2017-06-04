@@ -433,15 +433,13 @@ class JUnitWriter(GenericEventsListener):
 
         elapsed_time = time.time() - self._start_time
 
-        if result == passing:
-            test_case = TestCase(self._current_command, \
-                stdout=self._cmd_stdout, elapsed_sec=elapsed_time)
-        elif result == failing:
+        if result == failing:
             test_case = TestCase(self._current_command, \
                 stderr=self._cmd_stdout, elapsed_sec=elapsed_time)
             test_case.add_failure_info("result=%s"%result)
         else:
-            pass
+            test_case = TestCase(self._current_command, \
+                stdout=self._cmd_stdout, elapsed_sec=elapsed_time)
 
         self._test_cases.append(test_case)
 
