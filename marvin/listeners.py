@@ -10,6 +10,8 @@
 import os
 import sys
 import shutil
+import time
+import datetime
 import colorama
 from colorama import Fore, Style
 from junit_xml import TestCase, TestSuite
@@ -393,14 +395,15 @@ class JUnitWriter(GenericEventsListener):
         self._junitfile = None
         self._cmd_stdout = ""
         self._filename = None
+        self._start_time = None
 
     def listen(self, events):
         events.readFileStarted += self._save_filename
         events.createReportDirCompleted += self._save_reportdir
-        events.executeCommandStarted += self._save_exec_command
-        events.executeStreamLine += self._save_exec_streamline
+        events.executeCommandStarted += self._save_command_name
+        events.executeStreamLine += self._save_command_streamline
         events.executeCommandCompleted += self._create_test_case
-        events.collectCompleted += self._write_junit_file
+        events.testCompleted += self._write_junit_file
 
     ###########################################
     # SAVE INFORMATIONS
@@ -412,10 +415,14 @@ class JUnitWriter(GenericEventsListener):
         self._junitfile = os.path.join(reportdir.root, "report.xml")
         self._reportdir = reportdir
 
-    def _save_exec_command(self, command):
+    def _save_command_name(self, command):
+        self._start_time = time.time()
         self._current_command = command
 
-    def _save_exec_streamline(self, line):
+        # reset command stdout
+        self._cmd_stdout = ""
+
+    def _save_command_streamline(self, line):
         self._cmd_stdout += line
 
     ###########################################
@@ -424,17 +431,23 @@ class JUnitWriter(GenericEventsListener):
     def _create_test_case(self, passing, failing, result):
         test_case = None
 
+        elapsed_time = time.time() - self._start_time
+
         if result == passing:
-            test_case = TestCase(self._current_command, stdout=self._cmd_stdout)
+            test_case = TestCase(self._current_command, \
+                stdout=self._cmd_stdout, elapsed_sec=elapsed_time)
         elif result == failing:
-            test_case = TestCase(self._current_command, stderr=self._cmd_stdout)
-            test_case.add_failure_info(self._cmd_stdout)
-        else: # consider unkown as passed
-            test_case = TestCase(self._current_command, stdout=self._cmd_stdout)
+            test_case = TestCase(self._current_command, \
+                stderr=self._cmd_stdout, elapsed_sec=elapsed_time)
+            test_case.add_failure_info("result=%s"%result)
+        else:
+            pass
 
         self._test_cases.append(test_case)
 
     def _write_junit_file(self):
-        test_suite = TestSuite(self._filename, self._test_cases)
+        test_suite = TestSuite(self._filename, self._test_cases, \
+            timestamp=datetime.datetime.now())
+
         with open(self._junitfile, 'w') as junitfile:
             TestSuite.to_file(junitfile, [test_suite])

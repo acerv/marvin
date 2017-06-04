@@ -56,6 +56,10 @@ class CoreEvents:
     def __init__(self):
         _logger.debug("creating core events")
 
+        # opening/closing test events
+        self.testStarted = Event()
+        self.testCompleted = Event()
+
         # loading events
         self.readFileStarted = Event()
         self.readFileCompleted = Event()

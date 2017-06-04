@@ -194,6 +194,8 @@ class Core:
 
         deploy_done = False
 
+        self._events.testStarted()
+
         try:
             self.deploy.run()
 
@@ -211,6 +213,8 @@ class Core:
             else: # let it flow
                 raise ex
         finally:
+            self._events.testCompleted()
+
             if deploy_done:
                 try:
                     self.deploy.cleanup()
