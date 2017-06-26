@@ -246,7 +246,7 @@ class TerminalWriter(GenericEventsListener):
         events.executeStarted += self._print_execute_started
         events.executeCompleted += self._print_execute_completed
         events.executeCommandStarted += self._print_exec_command
-        #events.executeStreamLine += self._print_stream_line
+        events.executeStreamLine += self._print_stream_line
         events.executeCommandCompleted += self._print_exec_result
         events.collectStarted += self._print_collect_started
         events.collectCompleted += self._print_collect_completed
@@ -306,6 +306,9 @@ class TerminalWriter(GenericEventsListener):
             self._print_ok()
         else:
             self._print_fail()
+
+    def _print_stream_line(self, line):
+        self._stdout.write(">>> %s" % line)
 
     def _print_exec_command(self, command):
         self._stdout.write("executing '%s'..."%command)
