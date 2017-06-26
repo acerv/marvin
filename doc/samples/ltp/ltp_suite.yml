@@ -1,0 +1,41 @@
+description: execute LTP suite on target and collect the results
+name       : ltp_suite
+version    : '1.0'
+author     : Andrea Cervesato
+
+protocols:
+    ssh:
+        address : 192.168.2.1
+        port    : 22
+        user    : "root"
+        password: ""
+        timeout : 1200.0
+
+    sftp:
+        address : 192.168.2.1
+        port    : 22
+        user    : "root"
+        password: ""
+        timeout : 1200.0
+
+execute:
+    protocol: ssh
+
+    commands:
+        - script: |
+            rm -rf /mnt/sdcard/ltp/results
+            rm -rf /mnt/sdcard/ltp/output
+            /mnt/sdcard/ltp/runltp -p -q -d ltp-tmp -f io -S skipfile
+          
+          passing: "0"
+          failing: "1"
+
+collect:
+    protocol: sftp
+
+    transfer:
+        - source: "/mnt/sdcard/ltp/results"
+          dest  : "ltp-results"
+
+        - source: "/mnt/sdcard/ltp/output"
+          dest  : "ltp-output"
