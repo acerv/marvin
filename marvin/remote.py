@@ -115,6 +115,16 @@ class CommandStream(object):
         """
         raise NotImplementedError("please implement this method")
 
+class SSHClientNoAuth(paramiko.SSHClient):
+    """
+    Wrapper around SSHClient used to use SSH protocol with no
+    authentication.
+    """
+    # pylint: disable=unused-argument
+    def _auth(self, username, *args):
+        self._transport.auth_none(username)
+        return
+
 class OpenSSH:
     """
     The openssh protocol handler
@@ -136,28 +146,46 @@ class OpenSSH:
         self._protocol = protocol
 
     @staticmethod
-    def _ssh_connect_to_target(protocol):
+    def _ssh_setup_base(ssh):
+        ssh.load_system_host_keys()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    def _ssh_connect_to_target(self, protocol):
+        ssh = paramiko.SSHClient()
+        self._ssh_setup_base(ssh)
+
+        # paramiko doesn't accept empty string for user/password but None
+        inner_user = None
+        if protocol.user:
+            inner_user = protocol.user
+
+        inner_pwd = None
+        if protocol.password:
+            inner_pwd = protocol.password
+
         try:
-            ssh = paramiko.SSHClient()
-            ssh.load_system_host_keys()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-            # paramiko doesn't accept empty string for user/password but None
-            inner_user = None
-            if protocol.user:
-                inner_user = protocol.user
-
-            inner_pwd = None
-            if protocol.password:
-                inner_pwd = protocol.password
-
             ssh.connect(protocol.address, \
                 port=protocol.port, \
                 username=inner_user, \
                 password=inner_pwd, \
                 timeout=protocol.timeout)
+        except paramiko.AuthenticationException as ex:
+            try:
+                # paramiko raises AuthenticationException when
+                # SSH server supports no authentication mode and it looks like
+                # there's no other way to check this remotely, before connect.
+                ssh = SSHClientNoAuth()
+                self._ssh_setup_base(ssh)
+                ssh.connect(protocol.address, \
+                    port=protocol.port, \
+                    username=inner_user, \
+                    password=inner_pwd, \
+                    timeout=protocol.timeout)
+            except (paramiko.SSHException, \
+                    paramiko.BadHostKeyException,
+                    socket.error) as ex:
+                raise SSHConnectionError("%s"%ex) from ex
         except (paramiko.SSHException, \
-                paramiko.AuthenticationException, \
                 paramiko.BadHostKeyException,
                 socket.error) as ex:
             raise SSHConnectionError("%s"%ex) from ex
@@ -209,6 +237,8 @@ class OpenSSH:
         else: # transfer single file
             if icallback:
                 icallback(src, dst)
+
+            self._logger.debug("sending %s -> %s", src, dst)
 
             sftp.put(src, dst, tcallback)
 
