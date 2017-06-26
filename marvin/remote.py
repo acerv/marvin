@@ -146,13 +146,9 @@ class OpenSSH:
         self._protocol = protocol
 
     @staticmethod
-    def _ssh_setup_base(ssh):
+    def _ssh_try_connect(ssh, protocol):
         ssh.load_system_host_keys()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    def _ssh_connect_to_target(self, protocol):
-        ssh = paramiko.SSHClient()
-        self._ssh_setup_base(ssh)
 
         # paramiko doesn't accept empty string for user/password but None
         inner_user = None
@@ -169,25 +165,25 @@ class OpenSSH:
                 username=inner_user, \
                 password=inner_pwd, \
                 timeout=protocol.timeout)
+        except socket.error as ex:
+            raise SSHConnectionError("%s"%ex) from ex
+
+    def _ssh_connect_to_target(self, protocol):
+        ssh = None
+
+        try:
+            ssh = paramiko.SSHClient()
+            self._ssh_try_connect(ssh, protocol)
         except paramiko.AuthenticationException as ex:
             try:
                 # paramiko raises AuthenticationException when
                 # SSH server supports no authentication mode and it looks like
                 # there's no other way to check this remotely, before connect.
                 ssh = SSHClientNoAuth()
-                self._ssh_setup_base(ssh)
-                ssh.connect(protocol.address, \
-                    port=protocol.port, \
-                    username=inner_user, \
-                    password=inner_pwd, \
-                    timeout=protocol.timeout)
-            except (paramiko.SSHException, \
-                    paramiko.BadHostKeyException,
-                    socket.error) as ex:
+                self._ssh_try_connect(ssh, protocol)
+            except paramiko.SSHException as ex:
                 raise SSHConnectionError("%s"%ex) from ex
-        except (paramiko.SSHException, \
-                paramiko.BadHostKeyException,
-                socket.error) as ex:
+        except paramiko.SSHException as ex:
             raise SSHConnectionError("%s"%ex) from ex
 
         return ssh
