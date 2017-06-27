@@ -285,7 +285,8 @@ Where paramters are:
 The python version used by the framework is the 3.5.3. If your system does not
 provide it, you can use the `pyenv` package:
 
-    pip install --no-cache-dir --egg pyenv
+    sudo apt-get install libssl-dev
+    pip install --no-cache-dir pyenv
 
 Follow the pyenv instructions to setup your environment, then run:
 
