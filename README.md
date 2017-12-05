@@ -1,3 +1,5 @@
+**Consider marvin 1.x as a prototype. I'm working on a version which is going to be modular and fully extensible.**
+
 [![Build Status](https://travis-ci.org/acerv/marvin.svg?branch=master)](https://travis-ci.org/acerv/marvin)
 
 # Table of contents
